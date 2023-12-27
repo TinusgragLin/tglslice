@@ -2,6 +2,7 @@
 title="Rust - Exploring Lifetime Problems - 3"
 description="How should we understand this?"
 date=2023-12-27
+updated=2023-12-27
 
 [taxonomies]
 tags = ["rust-language", "rust-lifetime"]
@@ -35,12 +36,12 @@ impl<'a> St<'a> {
 }
 ```
 
-Let's see the first case `self.0 = &mut self.0[1..]`, the left side expects a `&'b mut [usize]`,
+Let's see the first case `self.0 = &mut self.0[1..]`, the left side expects a `&'a mut [usize]`,
 the right side is actually `std::ops::IndexMut::index_mut(self.0, 1..)`, note that since `self.0`
 is of type `&mut T` which *is not* `Copy`, there is an implicit reborrow: `index_mut(&mut *self.0, 1..)`,
 which basically creates another temporary `&'temp mut [usize]`, since it is created to be used inside
-the function, we have `'some_lifetime: 'temp`, but `'temp` has to be `'b` to satisfy the left side, so
-we now must have `'some_lifetime: 'b`.
+the function, we have `'some_lifetime: 'temp`, but `'temp` has to be `'a` to satisfy the left side, so
+we now must have `'some_lifetime: 'a`.
 
 In the second case, the line expands to `self.0 = std::ops::Index::index(self.0, 1..)` `self.0` is of type
 `&T` which *is* `Copy`, so the complication above does not come up.
