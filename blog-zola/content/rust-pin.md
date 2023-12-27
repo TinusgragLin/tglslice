@@ -77,7 +77,7 @@ One approach would be wrapping the value in a construct such that:
    value *can* be *intentionally* self-referential.
 
    The conditional part requires a way to tell a possibly intentionally
-   self-referential type apart. (That's `Unpin`!)
+   self-referential type apart. (That's `Unpin`, or, more understandably, `NoNeedToPin`!)
 
    The restriction part might seem non-trivial, but if you go back to the pre-solving
    section, you would notice that, for non-`Copy` types, all the transfer done without
@@ -87,8 +87,8 @@ One approach would be wrapping the value in a construct such that:
 
 Now if you only pay attention to the first 2 requirements, they look awfully like
 descriptions for any pointer-like structures referring to the inner value! And
-combining with the requirement 3, it seems like that the desired pointer-like structure
-shouldn't give mutable references to the inner values.
+combining with the requirement 3, the desired pointer-like structure shouldn't
+give the ownership or mutable references to the inner value.
 
 Often, these structures internally contain the memory address of the pointed-to
 value, which lives in stack or in heap. Values in stack, whose sizes should be
