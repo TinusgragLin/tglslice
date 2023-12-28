@@ -46,7 +46,7 @@ we now must have `'some_lifetime: 'a`.
 In the second case, the line expands to `self.0 = std::ops::Index::index(self.0, 1..)` `self.0` is of type
 `&T` which *is* `Copy`, so the complication above does not come up.
 
-One way to solve the problem in the first case without requiring `&some_lifetime: 'b` is to move the exclusive
+One way to solve the problem in the first case without requiring `'some_lifetime: 'b` is to move the exclusive
 reference out using `std::mem::{take,replace,swap}`:
 
 ```rust
