@@ -2,6 +2,7 @@
 title="Rust - Exploring Lifetime Problems - 2"
 description="How should we understand this?"
 date=2023-02-28
+updated=2023-12-29
 
 [taxonomies]
 tags = ["rust-language", "rust-lifetime"]
@@ -85,3 +86,7 @@ needs two different part of `self`:
         i1;
     }
 ```
+
+---
+
+This behavior is called [splitting-borrow](https://doc.rust-lang.org/nomicon/borrow-splitting.html).
