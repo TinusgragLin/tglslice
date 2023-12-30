@@ -7,6 +7,9 @@ updated=2023-12-29
 [taxonomies]
 tags = ["rust-language", "rust-lifetime", "rust-type-system"]
 categories = ["rust"]
+
+[extra]
+ToC=true
 +++
 
 # Subtyping

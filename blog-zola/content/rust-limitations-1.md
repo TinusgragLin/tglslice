@@ -2,10 +2,14 @@
 title="Rust - Limitations - 1"
 description="Of course, it's not yet done, and its's hard to design perfect things."
 date=2023-12-29
+updated=2023-12-30
 
 [taxonomies]
 tags = ["rust-language", "rust-limitations"]
 categories = ["rust"]
+
+[extra]
+ToC=true
 +++
 
 # Reborrow, and then Type Inference
@@ -16,10 +20,11 @@ So some references are moved, not reborrowed:
 let mut n: i32 = 42;
 let r1 = &mut n;
 
-// Works, it's known that `r2` is a mutable reference, a reborrow take places here:
+// Works, it's known that `r2` is a mutable reference, a reborrow take
+// places here:
 let r2: &mut _ = r1;
-// Error, `r1` is moved here because reborrow isn't triggered when the type of `r2`
-// is not known:
+// Error, `r1` is moved here because reborrow isn't triggered when the
+// type of `r2` is not known:
 let r2 = r1;
 // Also works, here it is also known that `r2` is a mutable reference:
 let r2 = &mut *r1;
@@ -144,8 +149,8 @@ impl<'arg> FnMut<&'arg str> for Captured {
   f(&mut n);
   f(&mut n);
   ```
-- Use functions, if the closure captures things, pass them as parameter or
-  constructing your own type.
+- Use functions, if the closure captures things, pass them as parameters or
+  collect them into your own type.
 
 # References
 
