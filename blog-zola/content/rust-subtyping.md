@@ -162,6 +162,8 @@ fn to_dog(r: &dyn Trait<Animal>) {
     r.change_to(Dog::new());
 }
 
+// For a more real-world example, replace Cat, Animal and Dog with
+// `&'outer_function_local T`, `&'static T` and `&'inner_function_local T`
 ```
 ---
 
