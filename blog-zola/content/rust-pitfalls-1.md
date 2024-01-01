@@ -81,8 +81,29 @@ fn from_val(val: u8) -> En { std::mem::transmute(val) }
 ```
 
 The function call expansion and two inlinings pushes the compiler to drastically optimize
-`from_val` to just a identity function, without any of the three, it won't be able to
-do this.
+`from_val` to just an identity function. Without the inlining of `En::from_u8_unchecked`,
+the problem is avoided since the compiler won't know what `val` is, but if only `my_then_some`
+is not inlined, the behavior will still be incorrect: the only use of `my_then_some` is
+inside `from_val`, and with the inlining of `En::from_u8_unchecked`, the compiler knows
+the the `condition` passed to `my_then_some` is always true, so only `my_then_some(true, ...)`
+is needed, so `my_then_some` again becomes an identity function.
 
 However, after the function call expansion, it's clear that we should not construct a `En`
 from `val` without checking the condition first, it is, actually, **our fault**.
+
+Side note: If you disable the inlining of `En::from_u8_unchecked` and check the correct
+`En::from_val` assembly, you will see that 2, an invalid value of `En`, is used as the
+`None` case:
+
+```assembly
+test1::En::from_val:
+ push    rbx
+ mov     ebx, edi
+ call    test1::En::from_u8_unchecked
+ cmp     bl, 2
+ movzx   ecx, al
+ mov     eax, 2
+ cmovb   eax, ecx
+ pop     rbx
+ ret
+```
