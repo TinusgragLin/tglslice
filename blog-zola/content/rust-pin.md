@@ -2,7 +2,7 @@
 title="About Rust's Pin"
 description="My attempt to understand Rust's Pin."
 date=2023-12-10
-updated=2023-12-10
+updated=2024-01-01
 
 [taxonomies]
 tags = ["rust-pin"]
@@ -27,9 +27,9 @@ may be considered invalid and continuing using it might cause serious problems.
 ### Implicit cases
 
 A value in Rust *can* be transfered *as is* implicitly whenever it is used. Depending
-on whether or not its type is `Copy`, you can either use the original bind for unlimited
-times or just once. In the fisrt case, the value is said to be 'copied', in the latter
-case, the value is said to be 'moved'. In both cases, whether or not the value is actually
+on whether or not its type is `Copy`, the original one is either kept untouched or
+invalidated. In the fisrt case, the value is said to be 'copied', in the latter case,
+the value is said to be 'moved'. In both cases, whether or not the value is actually
 transfered is determined by the compiler based on necessity analyses and optimization
 options. If a transfer does take place, it's *always a byte-by-byte transfer*, there
 currently lacks a way to customize these 'copy's and 'move's.

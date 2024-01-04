@@ -1,6 +1,6 @@
 +++
 title="Rust - Pitfalls - 1"
-description=""
+description="You may not expect the result."
 date=2024-01-01
 
 [taxonomies]
