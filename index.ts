@@ -1,7 +1,4 @@
-// import * as fs from 'node:fs';
-
-const main_site_host = '0.0.0.0'
-const blog_serve_dir = 'blog-zola/public'
+const blog_serve_dir = 'blog-site'
 
 function serve_blog(path: String): Response {
     if (path.endsWith('/')) {
@@ -14,12 +11,8 @@ function serve_blog(path: String): Response {
 }
 
 Bun.serve({
-    hostname: main_site_host,
-    port: '2233',
-    /* tls: {
-        cert: fs.readFileSync('./tls/server.pem'),
-        key: fs.readFileSync('./tls/server.key'),
-    }, */
+    hostname: '0.0.0.0',
+    port: '23333',
     fetch(request, server) {
         const url = new URL(request.url)
         const path = url.pathname

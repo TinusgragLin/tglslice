@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <title>Rust - Exploring Lifetime Problem - 4 - Tinusgraglin</title>
+    
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"><meta name="description" content="A Slice Rust - Exploring Lifetime Problem - 4 The drop check."/><meta name="keywords" content="rust, rust-language, rust-lifetime, rust-dropck" />
+    <meta property="og:title" content="A Slice of Tgl -&nbsp;Rust - Exploring Lifetime Problem - 4" />
+    <meta property="og:type" content="website"/><meta property="og:url" content="&#x2F;blog&#x2F;rust-explore-lifetime-problem-4&#x2F;"/><meta property="og:description" content="The drop check."/>
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="/blog/style.css?h=97e262212a0704163528">
+    <link rel="stylesheet" href=" /blog/color/orange.css?h=a5a5d7faf9d4bc3e0b18">
+    
+</head>
+    <body>
+        <div class="container center">
+<header class="header">
+    <div class="header__inner">
+        <div class="header__logo">
+            <a href="&#x2F;blog">
+    <div class="logo">
+        LIN
+    </div>
+</a>
+        </div>
+        <div class="menu-trigger">menu</div>
+    </div>
+    
+    <nav class="menu">
+        <ul class="menu__inner menu__inner--desktop">
+            
+            
+                    <li>
+                        <a href="
+    
+        /blog/about
+    
+">about</a>
+                    </li>
+                
+            </ul>
+
+        <ul class="menu__inner menu__inner--mobile">
+            
+        <li>
+            <a href="
+    
+        /blog/about
+    
+">about</a>
+        </li>
+        </ul>
+    </nav>
+
+    </header>
+<div class="content"><article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="&#x2F;blog&#x2F;rust-explore-lifetime-problem-4&#x2F;">Rust - Exploring Lifetime Problem - 4</a>
+            </h1>
+            
+    <div class="post-meta">
+        <span class="post-date">2024.01.02
+                [Updated: 2024.01.04]
+                </span>
+
+        <span class="post-author"></span>
+
+        
+
+    
+    :: {<a href="/blog/categories/rust/">rust</a>} 
+
+            
+    ::
+    #<a href="/blog/tags/rust-language/">rust-language</a>
+        
+    #<a href="/blog/tags/rust-lifetime/">rust-lifetime</a>
+        
+    #<a href="/blog/tags/rust-dropck/">rust-dropck</a>
+        
+    
+            
+        
+    </div>
+
+            
+    
+</header><p>The following example is taken from <a href="https://doc.rust-lang.org/nomicon/dropck.html">Rustnomicon - Drop Check</a>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">struct </span><span>Inspector&lt;</span><span style="color:#b48ead;">&#39;a</span><span>&gt;(&amp;</span><span style="color:#b48ead;">&#39;a u8</span><span>);
+</span><span>
+</span><span style="color:#b48ead;">struct </span><span>World&lt;</span><span style="color:#b48ead;">&#39;a</span><span>&gt; {
+</span><span>    </span><span style="color:#bf616a;">inspector</span><span>: Option&lt;Inspector&lt;</span><span style="color:#b48ead;">&#39;a</span><span>&gt;&gt;,
+</span><span>    </span><span style="color:#bf616a;">days</span><span>: </span><span style="color:#b48ead;">u8</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">impl</span><span>&lt;</span><span style="color:#b48ead;">&#39;a</span><span>&gt; Drop </span><span style="color:#b48ead;">for </span><span>Inspector&lt;</span><span style="color:#b48ead;">&#39;a</span><span>&gt; {
+</span><span>    </span><span style="color:#65737e;">// Here we must have: `&#39;a ⊃ &#39;inspector` for `drop` to be safe.
+</span><span>    </span><span style="color:#65737e;">// Particularly, if `&#39;a == &#39;static`, it is always safe to call
+</span><span>    </span><span style="color:#65737e;">// this `drop`, that&#39;s because `Drop::drop` won&#39;t be called for
+</span><span>    </span><span style="color:#65737e;">// static items, so `&#39;inspector` must not be &#39;&#39;static&#39;, thus
+</span><span>    </span><span style="color:#65737e;">// `&#39;static ⊃  &#39;inspector`.
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">drop</span><span>(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>) {
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">static</span><span> L: </span><span style="color:#b48ead;">u8 </span><span>= </span><span style="color:#d08770;">45</span><span>;
+</span><span>    </span><span style="color:#b48ead;">let</span><span> n = </span><span style="color:#d08770;">34</span><span>;
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> world = World {
+</span><span>        inspector: None,
+</span><span>        days: </span><span style="color:#d08770;">78</span><span>,
+</span><span>    };
+</span><span>    </span><span style="color:#b48ead;">let</span><span> m = </span><span style="color:#d08770;">67</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// 1. Error, here `&#39;a == &#39;world.days`:
+</span><span>    world.inspector = Some(Inspector(&amp;world.days));
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// 2. Error, here `&#39;a == &#39;m`, since `m` is dropped before `world`,
+</span><span>    </span><span style="color:#65737e;">// we have `&#39;world ⊃ &#39;m`:
+</span><span>    </span><span style="color:#65737e;">// world.inspector = Some(Inspector(&amp;m));
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// 3. Works, here `&#39;a == &#39;n`, since `world` is dropped before `n`,
+</span><span>    </span><span style="color:#65737e;">// we have `&#39;n ⊃ &#39;world`:
+</span><span>    </span><span style="color:#65737e;">// world.inspector = Some(Inspector(&amp;n));
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// 4. Works, here `&#39;a == &#39;static`:
+</span><span>    </span><span style="color:#65737e;">// world.inspector = Some(Inspector(&amp;L));
+</span><span>}
+</span></code></pre>
+<p>The essence of this problem is simple: since the implementation of <code>Drop::drop</code> for
+<code>Inspector&lt;'a&gt;</code> may inspect its contained <code>&amp;'a u8</code> and the compiler isn't interested
+in examine this, it requires that <code>'a</code> must <em>strictly outlive</em> (denoted by <code>⊃ </code>)
+<code>'inspector</code> for the implementation to be safe. The general rule is:</p>
+<blockquote>
+<p>For a generic type to soundly implement drop, its generics arguments must strictly
+outlive it.</p>
+</blockquote>
+<p>The detailed drop check rule is mentioned <a href="https://doc.rust-lang.org/std/ops/trait.Drop.html#drop-check">here</a>.</p>
+<hr />
+<p>However, when we know that our <code>drop</code> implementation won't inspect any value it contains
+that's deemed possibly dropped, this rule is too restricting. An escape hatch is the
+<code>#[may_dangle]</code> marker that tells the compiler to skip one case when checking the
+above rule:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">unsafe impl</span><span>&lt;</span><span style="background-color:#bf616a;color:#2b303b;">#</span><span>[may_dangle] </span><span style="color:#b48ead;">&#39;a</span><span>&gt; Drop for Inspector&lt;</span><span style="color:#b48ead;">&#39;a</span><span>&gt; { ... }
+</span></code></pre>
+<p>The actual meaning of this marker is defined in the <a href="https://rust-lang.github.io/rfcs/1327-dropck-param-eyepatch.html?highlight=1327#the-eyepatch-attribute">RFC</a>:</p>
+<blockquote>
+<p>When used on a type, e.g. <code>#[may_dangle] T</code>, the programmer is asserting the only uses
+of values of that type will be to move or drop them. Thus, no fields will be accessed
+nor methods called on values of such a type (apart from any access performed by the
+destructor for the type when the values are dropped).</p>
+<p>When used on a lifetime, e.g. <code>#[may_dangle] 'a</code>, the programmer is asserting that no
+data behind a reference of lifetime 'a will be accessed by the destructor.</p>
+</blockquote>
+<hr />
+<p>At first, I was confused by the fact that even though it is defined that fields
+in a <code>struct</code> is dropped in declaration order, the compiler is still unable to
+conclude that <code>World.inspector</code> is dropped before <code>World.days</code>. And the Nomicon
+only talks about how the compiler is unable to determine the drop order of elements
+inside a <code>Vec</code>, which implements its own <code>Drop</code>. How does this explain that the
+compiler is unable to decide whether the left <code>Vec</code> in a <code>(Vec&lt;U&gt;, Vec&lt;V&gt;)</code> has
+a longer lifetime than the right one or not?</p>
+<p>After <a href="https://users.rust-lang.org/t/a-question-about-drop-check/104781/">asking around</a>,
+It might be that the compiler simply won't consider the struct/tuple fields drop
+order <strong>just like</strong> it won't consider the drop order of elements in a <code>Vec</code>.</p>
+
+
+        
+    
+
+        
+        
+    </article></div>
+    <div class="pagination">
+        <div class="pagination__buttons">
+            </div>
+    </div>
+<footer class="footer">
+                    <div class="footer__inner"><div class="copyright">
+            <span>© 2024 Tinusgraglin <span/>
+            <span>:: Powered by <a href="https://www.getzola.org/">Zola</a>(<a href="https://www.rust-lang.org/">Rust</a>) and <a href="https://bun.sh">Bun</a>(<a href="https://ziglang.org">Zig</a>)</span>
+        </div>
+    <script type="text/javascript" src="/blog/assets/js/main.js"></script>
+</div>
+                    
+
+                </footer></div>
+    </body>
+</html>

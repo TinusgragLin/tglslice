@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <title>Rust - Arc Send and Sync Problem - Tinusgraglin</title>
+    
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"><meta name="description" content="A Slice Rust - Arc Send and Sync Problem Why `Arc&lt;T&gt;` requires that `T` is `Send + Sync` for itself to be `Send` or `Sync`?"/><meta name="keywords" content="rust, rust-language, rust-async" />
+    <meta property="og:title" content="A Slice of Tgl -&nbsp;Rust - Arc Send and Sync Problem" />
+    <meta property="og:type" content="website"/><meta property="og:url" content="&#x2F;blog&#x2F;rust-arc-send-sync&#x2F;"/><meta property="og:description" content="Why `Arc&lt;T&gt;` requires that `T` is `Send + Sync` for itself to be `Send` or `Sync`?"/>
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="/blog/style.css?h=97e262212a0704163528">
+    <link rel="stylesheet" href=" /blog/color/orange.css?h=a5a5d7faf9d4bc3e0b18">
+    
+</head>
+    <body>
+        <div class="container center">
+<header class="header">
+    <div class="header__inner">
+        <div class="header__logo">
+            <a href="&#x2F;blog">
+    <div class="logo">
+        LIN
+    </div>
+</a>
+        </div>
+        <div class="menu-trigger">menu</div>
+    </div>
+    
+    <nav class="menu">
+        <ul class="menu__inner menu__inner--desktop">
+            
+            
+                    <li>
+                        <a href="
+    
+        /blog/about
+    
+">about</a>
+                    </li>
+                
+            </ul>
+
+        <ul class="menu__inner menu__inner--mobile">
+            
+        <li>
+            <a href="
+    
+        /blog/about
+    
+">about</a>
+        </li>
+        </ul>
+    </nav>
+
+    </header>
+<div class="content"><article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="&#x2F;blog&#x2F;rust-arc-send-sync&#x2F;">Rust - Arc Send and Sync Problem</a>
+            </h1>
+            
+    <div class="post-meta">
+        <span class="post-date">2023.02.22
+                </span>
+
+        <span class="post-author"></span>
+
+        
+
+    
+    :: {<a href="/blog/categories/rust/">rust</a>} 
+
+            
+    ::
+    #<a href="/blog/tags/rust-language/">rust-language</a>
+        
+    #<a href="/blog/tags/rust-async/">rust-async</a>
+        
+    
+            
+        
+    </div>
+
+            
+    
+</header><p>All of this has to do with what <code>Arc&lt;T&gt;</code> can do:</p>
+<ol>
+<li>You only need a shared reference to <code>Arc&lt;T&gt;</code> to clone a <code>Arc&lt;T&gt;</code>, that is, to gain a shared reference to <code>T</code>.</li>
+<li>For a ref-counted (shared) reference system, the thread responsible for dropping the real <code>Arc&lt;T&gt;</code>, thus dropping <code>T</code>, might not be the thread originally own the <code>T</code>,
+and a thread can only drop what is inside its own local storage, thus <code>T</code> might need to be moved across threads.</li>
+</ol>
+<p>Thus for a <code>&amp;Arc&lt;T&gt;</code> to be <code>Send</code>, <code>T</code> needs to be <code>Sync</code> to allow multiple threads effectively holding a shared reference to <code>T</code>, and <code>T</code> also needs to be <code>Send</code> to allow
+any thread to be able to drop the whole <code>Arc</code> system when appropriable.</p>
+<p>And since <code>Arc&lt;T&gt;</code> is <code>Sync</code> iff <code>&amp;Arc&lt;T&gt;</code> is <code>Send</code>, the same thing goes when <code>Arc&lt;T&gt;</code> needs to be <code>Sync</code>.</p>
+
+
+        
+    
+
+        
+        
+    </article></div>
+    <div class="pagination">
+        <div class="pagination__buttons">
+            </div>
+    </div>
+<footer class="footer">
+                    <div class="footer__inner"><div class="copyright">
+            <span>© 2024 Tinusgraglin <span/>
+            <span>:: Powered by <a href="https://www.getzola.org/">Zola</a>(<a href="https://www.rust-lang.org/">Rust</a>) and <a href="https://bun.sh">Bun</a>(<a href="https://ziglang.org">Zig</a>)</span>
+        </div>
+    <script type="text/javascript" src="/blog/assets/js/main.js"></script>
+</div>
+                    
+
+                </footer></div>
+    </body>
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <title>QuickNote - Raft - Basic Design and Implementation - Tinusgraglin</title>
+    
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"><meta name="description" content="A Slice QuickNote - Raft - Basic Design and Implementation Things to be written down to be sure of what I don&#x27;t understand, how I can approach its implementation."/><meta name="keywords" content="quicknote, raft" />
+    <meta property="og:title" content="A Slice of Tgl -&nbsp;QuickNote - Raft - Basic Design and Implementation" />
+    <meta property="og:type" content="website"/><meta property="og:url" content="&#x2F;blog&#x2F;qknt-raft-0&#x2F;"/><meta property="og:description" content="Things to be written down to be sure of what I don&#x27;t understand, how I can approach its implementation."/>
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="/blog/style.css?h=97e262212a0704163528">
+    <link rel="stylesheet" href=" /blog/color/orange.css?h=a5a5d7faf9d4bc3e0b18">
+    
+</head>
+    <body>
+        <div class="container center">
+<header class="header">
+    <div class="header__inner">
+        <div class="header__logo">
+            <a href="&#x2F;blog">
+    <div class="logo">
+        LIN
+    </div>
+</a>
+        </div>
+        <div class="menu-trigger">menu</div>
+    </div>
+    
+    <nav class="menu">
+        <ul class="menu__inner menu__inner--desktop">
+            
+            
+                    <li>
+                        <a href="
+    
+        /blog/about
+    
+">about</a>
+                    </li>
+                
+            </ul>
+
+        <ul class="menu__inner menu__inner--mobile">
+            
+        <li>
+            <a href="
+    
+        /blog/about
+    
+">about</a>
+        </li>
+        </ul>
+    </nav>
+
+    </header>
+<div class="content"><article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="&#x2F;blog&#x2F;qknt-raft-0&#x2F;">QuickNote - Raft - Basic Design and Implementation</a>
+            </h1>
+            
+    <div class="post-meta">
+        <span class="post-date">2023.03.24
+                [Updated: 2023.04.17]
+                </span>
+
+        <span class="post-author"></span>
+
+        
+
+    
+    :: {<a href="/blog/categories/quicknote/">quicknote</a>} 
+
+            
+    ::
+    #<a href="/blog/tags/raft/">raft</a>
+        
+    
+            
+        
+    </div>
+
+            
+    
+
+
+<div class="toc" id="nav-container">
+	<p class="toc-head">Table of Contents</p>
+		<div id="nav-content" >
+		<ul>
+		
+			<li>
+				<a href="/blog/qknt-raft-0/#random-points-i-am-unclear-of">Random Points I am Unclear of</a>
+				
+			</li>
+		
+			<li>
+				<a href="/blog/qknt-raft-0/#handling-client-requests">Handling Client Requests</a>
+				
+					<ul>
+						
+							<li>
+								<a href="/blog/qknt-raft-0/#candidate">Candidate</a>
+							</li>
+							
+						
+							<li>
+								<a href="/blog/qknt-raft-0/#follower">Follower</a>
+							</li>
+							
+						
+							<li>
+								<a href="/blog/qknt-raft-0/#leader">Leader</a>
+							</li>
+							
+						
+					</ul>
+				
+			</li>
+		
+			<li>
+				<a href="/blog/qknt-raft-0/#handling-internal-rpcs">Handling Internal Rpcs</a>
+				
+					<ul>
+						
+							<li>
+								<a href="/blog/qknt-raft-0/#appendentries">AppendEntries</a>
+							</li>
+							
+								<ul>
+								
+									<li>
+										<a href="/blog/qknt-raft-0/#operations">Operations</a>
+										
+									</li>
+								
+									<li>
+										<a href="/blog/qknt-raft-0/#states-access-summary">States Access Summary</a>
+										
+									</li>
+								
+								</ul>
+							
+						
+							<li>
+								<a href="/blog/qknt-raft-0/#requestvote">RequestVote</a>
+							</li>
+							
+								<ul>
+								
+									<li>
+										<a href="/blog/qknt-raft-0/#operations-1">Operations</a>
+										
+									</li>
+								
+									<li>
+										<a href="/blog/qknt-raft-0/#states-access-summary-1">States Access Summary</a>
+										
+									</li>
+								
+								</ul>
+							
+						
+					</ul>
+				
+			</li>
+		
+			<li>
+				<a href="/blog/qknt-raft-0/#background-tasks">Background Tasks</a>
+				
+					<ul>
+						
+							<li>
+								<a href="/blog/qknt-raft-0/#the-background-tasks-managing-task-the-manager-or-alpha">The Background Tasks Managing Task (The Manager, or, ALPHA)</a>
+							</li>
+							
+						
+							<li>
+								<a href="/blog/qknt-raft-0/#the-state-machine-executing-task">The State Machine Executing Task</a>
+							</li>
+							
+						
+							<li>
+								<a href="/blog/qknt-raft-0/#vote-requesting-tasks-candidate-specific">Vote Requesting Tasks (Candidate Specific)</a>
+							</li>
+							
+								<ul>
+								
+									<li>
+										<a href="/blog/qknt-raft-0/#operations-2">Operations</a>
+										
+									</li>
+								
+								</ul>
+							
+						
+							<li>
+								<a href="/blog/qknt-raft-0/#log-replicating-tasks-leader-specific">Log Replicating Tasks (Leader Specific)</a>
+							</li>
+							
+								<ul>
+								
+									<li>
+										<a href="/blog/qknt-raft-0/#design-concerns">Design Concerns</a>
+										
+									</li>
+								
+									<li>
+										<a href="/blog/qknt-raft-0/#operations-3">Operations</a>
+										
+									</li>
+								
+								</ul>
+							
+						
+					</ul>
+				
+			</li>
+		
+		</ul>
+		</div>
+</div>
+
+</header><h2 id="random-points-i-am-unclear-of">Random Points I am Unclear of<a class="zola-anchor" href="#random-points-i-am-unclear-of" aria-label="Anchor link for: random-points-i-am-unclear-of">§</a>
+</h2>
+<p>Here's some random points I'm not clear of after I've read major parts of the <a href="https://raft.github.io/raft.pdf">Raft paper</a>
+and my attempts to answer:</p>
+<ol>
+<li>
+<p>Are AppendEntries RPCs sent <strong>periodically only</strong>, so you have to wait for
+a timer to go off before you can send <strong>any</strong> AppendEntries RPC? If it isn't,
+i.e., you can demand an AppendEntries to be sent right away, is the heartbeat
+still going on?</p>
+<p>This doesn't seems to be explicitly discussed. There are three ways to handle the two
+type of AppendEntries RPCs I can think of:</p>
+<ol>
+<li>Make them parallel with respect to each other.</li>
+<li>The RPC is only sent periodically, not on demand, so you have to wait for
+the next communication point if you want to send 'real' msgs.</li>
+<li>Stop the heartbeat ones when there are on-demand ones need to be sent, heartbeat
+ones are for screaming out &quot;I'am alive&quot; after all, if we have something real
+to send, trying to sending these real msgs is definitely a proof of liveness.</li>
+</ol>
+<p>Overall, I think Option 3 is the most plausible one, Option 1 wastes network bandwidth,
+Option 2 will delay client's request handling, although probably not by a lot.</p>
+</li>
+<li>
+<p>After the leader commits and applies the log, is it going to tell the other
+servers to apply to log? If so, how?</p>
+<p>The leader includes the index of the last committed log entry, when other
+followers learn that this log entry is committed, they will apply the log
+entry.</p>
+</li>
+<li>
+<p>When does the leader reply to the client? Is it after the log commit? Or
+after applying the log entry? Or after it tells other servers to apply the
+log entry?</p>
+<p>After applying the log entry.</p>
+</li>
+<li>
+<p>Depending on its state, a raft server may have a lot of things to do, e.g.
+receiving client requests, applying log entries, sending AppendEntries as the
+leader, or receiving client requests, having re-election timer going, handling 
+the leader's AppendEntries as a follower. Should all of these be run in parallel?
+If not, which part should be run in parallel?</p>
+<p>So, as it turns out, there are two major ways of implementing raft, one way, populated
+by etcd, is to model a raft node as a discrete-time state machine, the progress is made
+by advancing the state machine with/without inputs tick by tick. </p>
+<p>Another way is the normal multi-thread and/or multi-coroutine approach. Different threads/
+coroutines are communicated by channels, thus <code>select</code> -- the operation of handling the 
+earliest <code>recv</code> event of a channel when concurrently waiting for multiple channels, is
+typically used.</p>
+</li>
+</ol>
+<h2 id="handling-client-requests">Handling Client Requests<a class="zola-anchor" href="#handling-client-requests" aria-label="Anchor link for: handling-client-requests">§</a>
+</h2>
+<h3 id="candidate">Candidate<a class="zola-anchor" href="#candidate" aria-label="Anchor link for: candidate">§</a>
+</h3>
+<p>Deny or reply &quot;I don't know yet&quot;.</p>
+<h3 id="follower">Follower<a class="zola-anchor" href="#follower" aria-label="Anchor link for: follower">§</a>
+</h3>
+<p>If <code>cur_leader_id</code> is none, deny or reply &quot;I don't know yet&quot;, otherwise reply with &quot;contact the leader at ...&quot;</p>
+<p>(r:<code>cur_leader_id</code>, <code>cluster_config.member_addresses</code>)</p>
+<h3 id="leader">Leader<a class="zola-anchor" href="#leader" aria-label="Anchor link for: leader">§</a>
+</h3>
+<ul>
+<li>
+<p>Append a new log entry with the command in the request.</p>
+<p>(w:<code>log</code>)</p>
+</li>
+<li>
+<p>Wait for the replicating tasks to finish the replicating of the log entry.</p>
+<p>(might r:<code>log_committed_up_to</code>)</p>
+</li>
+<li>
+<p>Wait for the state machine executing task to complete applying the log entry
+and get the result.</p>
+<p>(might r:<code>log_applied_up_to</code>)</p>
+</li>
+<li>
+<p>Reply with the command executing result.</p>
+</li>
+</ul>
+<h2 id="handling-internal-rpcs">Handling Internal Rpcs<a class="zola-anchor" href="#handling-internal-rpcs" aria-label="Anchor link for: handling-internal-rpcs">§</a>
+</h2>
+<p>In all cases, if a rpc with a <strong>higher term number</strong> is received, the receiver should update the term and revert
+back to the follower state (if not already) first before further handling.</p>
+<p>(w:<code>cur_term</code>)
+(
+leadership state change: <code>Candidate</code> -&gt; <code>Follower</code>, w:<code>leadership_state</code> or
+leadership state change: <code>Leader</code> -&gt; <code>Follower</code>, w:<code>leadership_state</code>,
+<code>next_log_append_idx</code>s (init),<code>log_replicated_up_to</code>s (init),<code>cur_leader_id</code> (invalidate)
+)</p>
+<h3 id="appendentries">AppendEntries<a class="zola-anchor" href="#appendentries" aria-label="Anchor link for: appendentries">§</a>
+</h3>
+<h4 id="operations">Operations<a class="zola-anchor" href="#operations" aria-label="Anchor link for: operations">§</a>
+</h4>
+<p>In all cases, deny if the message's term number is less than the current term.</p>
+<p>(r:<code>cur_term</code>)</p>
+<p>Thus, the following deals only the case where the message's term number is the same as the
+receiver.</p>
+<ul>
+<li>
+<p>Leader</p>
+<p>Since <code>AppendEntries</code> rpcs are only sent by a leader, and raft guaranteed that there will only be one leader
+for one term, a <code>AppendEntries</code> with the same term number indicates a critical system error.</p>
+</li>
+<li>
+<p>Candidate</p>
+<p>Revert back to the follower state first before further handling the rpc.</p>
+<p>(leadership state change: <code>Candidate</code> -&gt; <code>Follower</code>, w:<code>leadership_state</code>)</p>
+</li>
+<li>
+<p>Follower</p>
+<p><em>Reset re-election timeout.</em></p>
+<p>(r:<code>cluster_config.election_timeout_range</code>)</p>
+<ul>
+<li>
+<p>Do the consistency check first, and deny if the consistency check fails.</p>
+<p>In consistency check, we check if the meta info contained in the msg about the log
+entry new log entries should insert after can lead us to an existing entry in our log.</p>
+<p>(r:<code>log</code>)</p>
+</li>
+</ul>
+<p>If the age check is passed, then the msg either:</p>
+<ol>
+<li>
+<p>contains no entry, in which case the rpc is just a heartbeat.</p>
+</li>
+<li>
+<p>contains some entries, and the range of these entries may overlap with
+existing entries in the current log.</p>
+<p>First, for the overlapping part, we examine each pair from start to end, if</p>
+<ol>
+<li>the two entries on both sides matches (in, specifically, <code>term</code>), then
+we skip it.</li>
+<li>otherwise, we trust the msg and discard all the entries starting at this
+examined one. Note that we just expanded the non-overlapping part in this
+case.</li>
+</ol>
+<p>(r: <code>log</code>, w: <code>log</code>)</p>
+<p>Then, for the non-overlapping part, we append all those entries to our log.</p>
+<p>(w: <code>log</code>)</p>
+</li>
+</ol>
+<p>Then, the server updates its <code>log_committed_up_to</code> if necessary.</p>
+<p>(w: <code>log_committed_up_to</code>)</p>
+<p>Finally, the server return the response.</p>
+</li>
+</ul>
+<h4 id="states-access-summary">States Access Summary<a class="zola-anchor" href="#states-access-summary" aria-label="Anchor link for: states-access-summary">§</a>
+</h4>
+<p>R: <code>cur_term</code>, <code>cluster_config.election_timeout_range</code>, <code>log</code></p>
+<p>W: <code>cur_term</code>, <code>leadership_state</code>, <code>next_log_append_idx</code>s, <code>log_replicated_up_to</code>s,
+<code>cur_leader_id</code>, <code>log_committed_up_to</code>, <code>log</code></p>
+<p>or:</p>
+<p>Exclusive:</p>
+<p><code>cur_term</code>
+<code>log</code></p>
+<p><code>leadership_state</code>
+<code>log_committed_up_to</code>
+<code>next_log_append_idx</code>s
+<code>log_replicated_up_to</code>s
+<code>cur_leader_id</code></p>
+<p>Read-only:</p>
+<p><code>cluster_config.election_timeout_range</code></p>
+<h3 id="requestvote">RequestVote<a class="zola-anchor" href="#requestvote" aria-label="Anchor link for: requestvote">§</a>
+</h3>
+<h4 id="operations-1">Operations<a class="zola-anchor" href="#operations-1" aria-label="Anchor link for: operations-1">§</a>
+</h4>
+<p>In all cases, deny if the message's term number is less than the current term or the server
+has been voted to any <strong>other</strong> server.</p>
+<p>(r:<code>cur_term</code>, <code>last_voted_to</code>)</p>
+<p>Thus, the following deals only the case where the message's term number is the same as the
+receiver and the server has not voted to any <strong>other</strong> server.</p>
+<p>In all cases, </p>
+<p>Do the age check, deny if the age check is not passed, write <code>last_voted_to</code> and return sucess
+if passed.</p>
+<p>In consistency check, we check if the meta info contained in the msg about the last log
+entry of the sender at the moment of sending this msg indicates that the sender's log is
+not older than ours.</p>
+<p>(r:<code>log</code>(length and <code>term</code> of the last entry), w:<code>last_voted_to</code>)</p>
+<h4 id="states-access-summary-1">States Access Summary<a class="zola-anchor" href="#states-access-summary-1" aria-label="Anchor link for: states-access-summary-1">§</a>
+</h4>
+<p>R: <code>cur_term</code>, <code>log</code>, <code>last_voted_to</code></p>
+<p>W: <code>cur_term</code>, <code>leadership_state</code>, <code>next_log_append_idx</code>s, <code>log_replicated_up_to</code>s, <code>last_voted_to</code></p>
+<p>or:</p>
+<p>Exclusive:</p>
+<p><code>last_voted_to</code>
+<code>cur_term</code>
+<code>leadership_state</code>
+<code>next_log_append_idx</code>s
+<code>log_replicated_up_to</code>s</p>
+<p>Read-only:</p>
+<p><code>log</code></p>
+<h2 id="background-tasks">Background Tasks<a class="zola-anchor" href="#background-tasks" aria-label="Anchor link for: background-tasks">§</a>
+</h2>
+<h3 id="the-background-tasks-managing-task-the-manager-or-alpha">The Background Tasks Managing Task (The Manager, or, <code>ALPHA</code>)<a class="zola-anchor" href="#the-background-tasks-managing-task-the-manager-or-alpha" aria-label="Anchor link for: the-background-tasks-managing-task-the-manager-or-alpha">§</a>
+</h3>
+<h3 id="the-state-machine-executing-task">The State Machine Executing Task<a class="zola-anchor" href="#the-state-machine-executing-task" aria-label="Anchor link for: the-state-machine-executing-task">§</a>
+</h3>
+<p>This task should be running the inner state machine and provide ways to apply committed log entries
+to or read states from the underlying state machine.</p>
+<p>(o:<code>state_machine</code>)</p>
+<h3 id="vote-requesting-tasks-candidate-specific">Vote Requesting Tasks (Candidate Specific)<a class="zola-anchor" href="#vote-requesting-tasks-candidate-specific" aria-label="Anchor link for: vote-requesting-tasks-candidate-specific">§</a>
+</h3>
+<p>Dedicated vote requesting tasks, one for each of all the other servers.</p>
+<h4 id="operations-2">Operations<a class="zola-anchor" href="#operations-2" aria-label="Anchor link for: operations-2">§</a>
+</h4>
+<p>Specifically, a vote requesting task for a targeting server should:</p>
+<ul>
+<li>
+<p>Send a <code>RequestVote</code> RPC request.</p>
+<p>(r:<code>id</code>, <code>cur_term</code>, <code>log</code>^ (the <strong>last log entry</strong> meta info))</p>
+</li>
+<li>
+<p>Wait for the reply.</p>
+</li>
+<li>
+<p>Discard the reply if its <code>term</code> is less than <code>cur_term</code> and retry the request,
+report back to <code>ALPHA</code> and terminate if higher (in this case the server should
+reverts back to <code>follower</code> state).</p>
+<p>Otherwise, report back the result of vote request to <code>ALPHA</code> and end.</p>
+<p>(r:<code>cur_term</code>)</p>
+</li>
+</ul>
+<h3 id="log-replicating-tasks-leader-specific">Log Replicating Tasks (Leader Specific)<a class="zola-anchor" href="#log-replicating-tasks-leader-specific" aria-label="Anchor link for: log-replicating-tasks-leader-specific">§</a>
+</h3>
+<p>Dedicated log replicating (&amp; heartbeat) threads, one for each of all the followers.</p>
+<h4 id="design-concerns">Design Concerns<a class="zola-anchor" href="#design-concerns" aria-label="Anchor link for: design-concerns">§</a>
+</h4>
+<ul>
+<li>
+<p>Replicating trigger:</p>
+<p><code>log_committed_up_to</code> (global) &gt; <code>next_log_append_idx</code> (local)</p>
+<ol>
+<li>
+<p>Local <code>next_log_append_idx</code> collected to <code>ALPHA</code></p>
+<p><code>ALPHA</code> is responsible for</p>
+<ol>
+<li>collecting global <code>log_committed_up_to</code></li>
+<li>notifying some of the log replicating tasks (with <code>log_committed_up_to</code>)</li>
+</ol>
+<p>The local log replicating task only needs to</p>
+<ol>
+<li>listen to notifications from <code>ALPHA</code> </li>
+</ol>
+</li>
+<li>
+<p>Global <code>log_committed_up_to</code> collected to local</p>
+<p><code>ALPHA</code> can collect <code>log_committed_up_to</code> first and forward it to
+every tasks.</p>
+<p>In this case, <code>ALPHA</code> is responsible for</p>
+<ol>
+<li>collecting global <code>log_committed_up_to</code></li>
+<li>directly forwarding this info to every tasks</li>
+</ol>
+<p>The local log replicating task needs to</p>
+<ol>
+<li>collect <code>log_committed_up_to</code> from <code>ALPHA</code></li>
+<li>examine <code>log_committed_up_to</code> and <code>next_log_append_idx</code></li>
+</ol>
+<p>Or whenever <code>log_committed_up_to</code> is changed, its value is sent to every tasks,
+this requires either:</p>
+<ol>
+<li>all tasks listen to one single channel, or</li>
+<li>channels to all tasks are known whenever <code>log_committed_up_to</code> changes</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>
+<p><code>log_committed_up_to</code> Update</p>
+<ol>
+<li>Updates of <code>log_replicated_up_to</code> are reported back to <code>ALPHA</code>, who
+counts and gives the update to <code>log_committed_up_to</code> whenever suitable.</li>
+</ol>
+</li>
+</ul>
+<h4 id="operations-3">Operations<a class="zola-anchor" href="#operations-3" aria-label="Anchor link for: operations-3">§</a>
+</h4>
+<p>Specifically, a log replicating task for a targeting server should:</p>
+<p>(r:<code>log_committed_up_to</code>?)</p>
+<p>(o:<code>next_log_append_idx</code>(one), <code>log_replicated_up_to</code>(one))</p>
+<ul>
+<li>
+<p>Setup a background timer that ticks whenever a whole <code>heartbeat_timeout</code> worth of time has passed.</p>
+<p>(r:<code>cluster_config.heartbeat_timeout</code>)</p>
+</li>
+<li>
+<p>Wait for</p>
+<ul>
+<li>
+<p>The reply to the last replicating RPC has arrived</p>
+<p>If the reply contains a higher <code>term</code>, report back to <code>ALPHA</code> and terminate.</p>
+<p>Update <code>next_log_append_idx</code>, <code>log_replicated_up_to</code>, report back to <code>ALPHA</code>.</p>
+<p>(r:<code>cur_term</code>)</p>
+</li>
+<li>
+<p>The reply to the last Heartbeat has arrived</p>
+<p>If the reply contains a higher <code>term</code>, report back to <code>ALPHA</code> and terminate.</p>
+<p>Report back to <code>ALPHA</code> that a successful heartbeat communication is just done.</p>
+<p>(r:<code>cur_term</code>)</p>
+</li>
+<li>
+<p>Replicating RPC send signal</p>
+<p>Delay handling if the last replicating RPC has not yet received its reply.
+(Or just cancel the last one and send a new one?)</p>
+<p>Send <code>AppendEntries</code> with log entries data starting at <code>next_log_append_idx</code>.
+If successful, reset the heartbeat timer.</p>
+<p>(r:<code>id</code>, <code>cur_term</code>, <code>log</code>)</p>
+</li>
+<li>
+<p>Heartbeat send signal</p>
+<p>Cancel the last Heartbeat if its reply is still misssing now.</p>
+<p>Send an empty <code>AppendEntries</code> that says: insert no log entry after <code>next_log_append_idx</code>.</p>
+<p>(r:<code>id</code>, <code>cur_term</code>, <code>log</code>(for meta data of the log entry just before <code>next_log_append_idx</code>))</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>(Within a <code>cluster_config.election_timeout</code>, a leader should receive replies to its RPCs from a
+majority of all servers, if not, the leader should revert itself back to follower state)</p>
+
+
+        
+    
+
+        
+        
+    </article></div>
+    <div class="pagination">
+        <div class="pagination__buttons">
+            </div>
+    </div>
+<footer class="footer">
+                    <div class="footer__inner"><div class="copyright">
+            <span>© 2024 Tinusgraglin <span/>
+            <span>:: Powered by <a href="https://www.getzola.org/">Zola</a>(<a href="https://www.rust-lang.org/">Rust</a>) and <a href="https://bun.sh">Bun</a>(<a href="https://ziglang.org">Zig</a>)</span>
+        </div>
+    <script type="text/javascript" src="/blog/assets/js/main.js"></script>
+</div>
+                    
+
+                </footer></div>
+    </body>
+</html>

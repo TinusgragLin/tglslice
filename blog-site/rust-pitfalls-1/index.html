@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <title>Rust - Pitfalls - 1 - Tinusgraglin</title>
+    
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"><meta name="description" content="A Slice Rust - Pitfalls - 1 You may not expect the result."/><meta name="keywords" content="rust, rust-language, rust-pitfalls" />
+    <meta property="og:title" content="A Slice of Tgl -&nbsp;Rust - Pitfalls - 1" />
+    <meta property="og:type" content="website"/><meta property="og:url" content="&#x2F;blog&#x2F;rust-pitfalls-1&#x2F;"/><meta property="og:description" content="You may not expect the result."/>
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="/blog/style.css?h=97e262212a0704163528">
+    <link rel="stylesheet" href=" /blog/color/orange.css?h=a5a5d7faf9d4bc3e0b18">
+    
+</head>
+    <body>
+        <div class="container center">
+<header class="header">
+    <div class="header__inner">
+        <div class="header__logo">
+            <a href="&#x2F;blog">
+    <div class="logo">
+        LIN
+    </div>
+</a>
+        </div>
+        <div class="menu-trigger">menu</div>
+    </div>
+    
+    <nav class="menu">
+        <ul class="menu__inner menu__inner--desktop">
+            
+            
+                    <li>
+                        <a href="
+    
+        /blog/about
+    
+">about</a>
+                    </li>
+                
+            </ul>
+
+        <ul class="menu__inner menu__inner--mobile">
+            
+        <li>
+            <a href="
+    
+        /blog/about
+    
+">about</a>
+        </li>
+        </ul>
+    </nav>
+
+    </header>
+<div class="content"><article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="&#x2F;blog&#x2F;rust-pitfalls-1&#x2F;">Rust - Pitfalls - 1</a>
+            </h1>
+            
+    <div class="post-meta">
+        <span class="post-date">2024.01.01
+                </span>
+
+        <span class="post-author"></span>
+
+        
+
+    
+    :: {<a href="/blog/categories/rust/">rust</a>} 
+
+            
+    ::
+    #<a href="/blog/tags/rust-language/">rust-language</a>
+        
+    #<a href="/blog/tags/rust-pitfalls/">rust-pitfalls</a>
+        
+    
+            
+        
+    </div>
+
+            
+    
+
+
+<div class="toc" id="nav-container">
+	<p class="toc-head">Table of Contents</p>
+		<div id="nav-content" >
+		<ul>
+		
+			<li>
+				<a href="/blog/rust-pitfalls-1/#function-call-argument-evaluation-and-inlining-enabled-optimization">Function Call Argument Evaluation and Inlining-enabled Optimization</a>
+				
+			</li>
+		
+		</ul>
+		</div>
+</div>
+
+</header><h1 id="function-call-argument-evaluation-and-inlining-enabled-optimization">Function Call Argument Evaluation and Inlining-enabled Optimization<a class="zola-anchor" href="#function-call-argument-evaluation-and-inlining-enabled-optimization" aria-label="Anchor link for: function-call-argument-evaluation-and-inlining-enabled-optimization">§</a>
+</h1>
+<p>Arguments passed to a function are generally evaluated first before calling the
+function, and if the function is inlined (i.e. the compiler can see what's inside
+the function), the compiler can do optimizations that are against the original
+intention. The following code might seem perfectly valid:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">repr</span><span>(u8)]
+</span><span style="color:#b48ead;">enum </span><span>En {
+</span><span>    </span><span style="color:#d08770;">N1 </span><span>= </span><span style="color:#d08770;">0</span><span>,
+</span><span>    </span><span style="color:#d08770;">N2 </span><span>= </span><span style="color:#d08770;">1</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#65737e;">/// Return `Some(val)` if the condition holds, `None` otherwise.
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">my_then_some</span><span>(</span><span style="color:#bf616a;">condition</span><span>: </span><span style="color:#b48ead;">bool</span><span>, </span><span style="color:#bf616a;">val</span><span>: En) -&gt; Option&lt;En&gt; {
+</span><span>    </span><span style="color:#b48ead;">if</span><span> condition { Some(val) } </span><span style="color:#b48ead;">else </span><span>{ None }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">impl </span><span>En {
+</span><span>    </span><span style="color:#65737e;">/// # Safety
+</span><span>    </span><span style="color:#65737e;">/// The caller should guarantee that `val` is less than 2.
+</span><span>    </span><span style="color:#b48ead;">unsafe fn </span><span style="color:#8fa1b3;">from_u8_unchecked</span><span>(</span><span style="color:#bf616a;">val</span><span>: </span><span style="color:#b48ead;">u8</span><span>) -&gt; </span><span style="color:#b48ead;">Self </span><span>{
+</span><span>        std::mem::transmute(val)
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">inline</span><span>(never)]
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">from_val</span><span>(</span><span style="color:#bf616a;">val</span><span>: </span><span style="color:#b48ead;">u8</span><span>) -&gt; Option&lt;En&gt; {
+</span><span>        </span><span style="color:#96b5b4;">my_then_some</span><span>(val &lt; </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#b48ead;">unsafe </span><span>{ En::from_u8_unchecked(val) })
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>But if you build it in release mode (<code>--release</code>) and check the assembly code,
+<code>En::from_val</code> is simply <code>mov eax, edi</code> (Intel style syntax), i.e. it simply
+returns the only argument as is, without any checking.</p>
+<p>The reason is two fold, first, passing expressions to function as arguments is
+equivalent to evaluate these expressions first, and then call the function with
+the evaluated values, <code>from_val</code> is actually:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> condition = val &lt; </span><span style="color:#d08770;">2</span><span>;
+</span><span style="color:#b48ead;">let</span><span> en = </span><span style="color:#b48ead;">unsafe </span><span>{ En::from_u8_unchecked(val) }
+</span><span style="color:#96b5b4;">my_then_some</span><span>(condition, en)
+</span></code></pre>
+<p>And second, <code>En::from_u8_unchecked</code> and <code>my_then_some</code> are very small functions, so
+after inlining both of them, we get:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> condition = val &lt; </span><span style="color:#d08770;">2</span><span>;
+</span><span style="color:#b48ead;">let</span><span> en = </span><span style="color:#b48ead;">unsafe </span><span>{ std::mem::transmute(val) }
+</span><span style="color:#b48ead;">if</span><span> condition { Some(en) } </span><span style="color:#b48ead;">else </span><span>{ None }
+</span></code></pre>
+<p>Now the compiler is able to see that we unconditionally use <code>val: u8</code> as <code>En</code>, and
+it assumes that you know what you are doing: the resulting <code>En</code> is completely valid
+i.e. it is either <code>En::N1</code> (<code>0</code>) or <code>En::N2</code> (<code>1</code>), since that <code>En</code> is just <code>val</code>,
+<code>val</code> must also be either 0 or 1! No need to compute <code>condition</code>, it must be <code>true</code>!
+<code>if condition { Some(en) } else { None }</code> is simply <code>Some(en)</code>, this function can not
+even return <code>None</code>!</p>
+<p>Just imagine how happy the compiler is, it can reduce the original <code>from_val</code> to just:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">from_val</span><span>(</span><span style="color:#bf616a;">val</span><span>: </span><span style="color:#b48ead;">u8</span><span>) -&gt; En { std::mem::transmute(val) }
+</span></code></pre>
+<p>The function call expansion and two inlinings pushes the compiler to drastically optimize
+<code>from_val</code> to just an identity function. Without the inlining of <code>En::from_u8_unchecked</code>,
+the problem is avoided since the compiler won't know what <code>val</code> is, but if only <code>my_then_some</code>
+is not inlined, the behavior will still be incorrect: the only use of <code>my_then_some</code> is
+inside <code>from_val</code>, and with the inlining of <code>En::from_u8_unchecked</code>, the compiler knows
+the the <code>condition</code> passed to <code>my_then_some</code> is always true, so only <code>my_then_some(true, ...)</code>
+is needed, so <code>my_then_some</code> again becomes an identity function.</p>
+<p>However, after the function call expansion, it's clear that we should not construct a <code>En</code>
+from <code>val</code> without checking the condition first, it is, actually, <strong>our fault</strong>.</p>
+<p>Side note: If you disable the inlining of <code>En::from_u8_unchecked</code> and check the correct
+<code>En::from_val</code> assembly, you will see that 2, an invalid value of <code>En</code>, is used as the
+<code>None</code> case:</p>
+<pre data-lang="assembly" style="background-color:#2b303b;color:#c0c5ce;" class="language-assembly "><code class="language-assembly" data-lang="assembly"><span>test1::En::from_val:
+</span><span> push    rbx
+</span><span> mov     ebx, edi
+</span><span> call    test1::En::from_u8_unchecked
+</span><span> cmp     bl, 2
+</span><span> movzx   ecx, al
+</span><span> mov     eax, 2
+</span><span> cmovb   eax, ecx
+</span><span> pop     rbx
+</span><span> ret
+</span></code></pre>
+
+
+        
+    
+
+        
+        
+    </article></div>
+    <div class="pagination">
+        <div class="pagination__buttons">
+            </div>
+    </div>
+<footer class="footer">
+                    <div class="footer__inner"><div class="copyright">
+            <span>© 2024 Tinusgraglin <span/>
+            <span>:: Powered by <a href="https://www.getzola.org/">Zola</a>(<a href="https://www.rust-lang.org/">Rust</a>) and <a href="https://bun.sh">Bun</a>(<a href="https://ziglang.org">Zig</a>)</span>
+        </div>
+    <script type="text/javascript" src="/blog/assets/js/main.js"></script>
+</div>
+                    
+
+                </footer></div>
+    </body>
+</html>
