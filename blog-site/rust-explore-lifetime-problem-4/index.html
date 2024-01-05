@@ -157,7 +157,7 @@ destructor for the type when the values are dropped).</p>
 data behind a reference of lifetime 'a will be accessed by the destructor.</p>
 </blockquote>
 <hr />
-<p>At first, I was confused by the fact that even though it is defined that fields
+<p>At first, I was confused by the fact that even though it is <a href="https://doc.rust-lang.org/reference/destructors.html#destructors">defined</a> that fields
 in a <code>struct</code> is dropped in declaration order, the compiler is still unable to
 conclude that <code>World.inspector</code> is dropped before <code>World.days</code>. And the Nomicon
 only talks about how the compiler is unable to determine the drop order of elements

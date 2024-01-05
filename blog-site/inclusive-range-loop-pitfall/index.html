@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <title>An Inclusive-end Number Range Loop Pitfall - Tinusgraglin</title>
+    
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"><meta name="description" content="A Slice An Inclusive-end Number Range Loop Pitfall It&#x27;s also related to Rust."/><meta name="keywords" content="pitfalls, pitfalls, rust-language, rust-pitfalls" />
+    <meta property="og:title" content="A Slice of Tgl -&nbsp;An Inclusive-end Number Range Loop Pitfall" />
+    <meta property="og:type" content="website"/><meta property="og:url" content="&#x2F;blog&#x2F;inclusive-range-loop-pitfall&#x2F;"/><meta property="og:description" content="It&#x27;s also related to Rust."/>
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="/blog/style.css?h=97e262212a0704163528">
+    <link rel="stylesheet" href=" /blog/color/orange.css?h=a5a5d7faf9d4bc3e0b18">
+    
+</head>
+    <body>
+        <div class="container center">
+<header class="header">
+    <div class="header__inner">
+        <div class="header__logo">
+            <a href="&#x2F;blog">
+    <div class="logo">
+        LIN
+    </div>
+</a>
+        </div>
+        <div class="menu-trigger">menu</div>
+    </div>
+    
+    <nav class="menu">
+        <ul class="menu__inner menu__inner--desktop">
+            
+            
+                    <li>
+                        <a href="
+    
+        /blog/about
+    
+">about</a>
+                    </li>
+                
+            </ul>
+
+        <ul class="menu__inner menu__inner--mobile">
+            
+        <li>
+            <a href="
+    
+        /blog/about
+    
+">about</a>
+        </li>
+        </ul>
+    </nav>
+
+    </header>
+<div class="content"><article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="&#x2F;blog&#x2F;inclusive-range-loop-pitfall&#x2F;">An Inclusive-end Number Range Loop Pitfall</a>
+            </h1>
+            
+    <div class="post-meta">
+        <span class="post-date">2024.01.05
+                </span>
+
+        <span class="post-author"></span>
+
+        
+
+    
+    :: {<a href="/blog/categories/pitfalls/">pitfalls</a>} 
+
+            
+    ::
+    #<a href="/blog/tags/pitfalls/">pitfalls</a>
+        
+    #<a href="/blog/tags/rust-language/">rust-language</a>
+        
+    #<a href="/blog/tags/rust-pitfalls/">rust-pitfalls</a>
+        
+    
+            
+        
+    </div>
+
+            
+    
+</header><p>Say we want to implement a function that sum up number 0 to <code>n</code> but excludes
+a particular &quot;bad number&quot;, this is easily acccomplished with a loop:</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#b48ead;">#define </span><span>BAD_NUMBER </span><span style="color:#d08770;">69
+</span><span>
+</span><span>uint64_t </span><span style="color:#8fa1b3;">sum_of_all_good</span><span>(uint32_t </span><span style="color:#bf616a;">n</span><span>) {
+</span><span>    uint64_t sum = </span><span style="color:#d08770;">0</span><span>;
+</span><span>    </span><span style="color:#b48ead;">for </span><span>(uint32_t i = </span><span style="color:#d08770;">0</span><span>; i &lt;= n; i++) {
+</span><span>        </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
+</span><span>            sum += i;
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">return</span><span> sum;
+</span><span>}
+</span></code></pre>
+<p>Of cause, we are careful programmers, when <code>n</code> is a <code>uint32</code>, the <code>sum</code> is
+defined to be a <code>uint64</code> to avoid overflow. Assuming <code>n</code> is not larger than
+<code>2^32 - 1</code>, the program does exactly what we want, right?</p>
+<p>Before giving a definitive answer, we may first de-sugar the for-loop down
+to a more primitive form, while-loop:</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span>uint64_t sum = </span><span style="color:#d08770;">0</span><span>;
+</span><span>uint64_t i = </span><span style="color:#d08770;">0</span><span>;
+</span><span style="color:#b48ead;">while</span><span> i &lt;= n {
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
+</span><span>        sum += i;
+</span><span>    i += </span><span style="color:#d08770;">1</span><span>;
+</span><span>}
+</span></code></pre>
+<p>You may have spot the problem: the loop entry condition is <code>i &lt;= n</code>, and at
+the end of the loop, <code>i</code> is incremented by 1, so at the last iteration, when
+<code>i</code> reaches <code>n</code>, <code>i</code> in incremented to <code>n + 1</code> at the end of the loop. Now <code>n</code>
+is a valid <code>uint32</code>, but <code>n + 1</code>? Not so sure: when <code>n == 2^32 - 1</code>, <code>n + 1</code>
+siliently (in C) turns to 0. So <code>i</code> goes back to <code>0</code> at the end of the last
+iteration!</p>
+<p>The heart of this problem is the way we use the value of <code>i</code> to determine when
+the loop needs to end: when <code>i</code> is larger than <code>n</code>, which is not always possible.</p>
+<p>A more safer way is to say that when <code>i</code> equals to <code>n</code>, we are done <em>after</em> we
+use this <code>i</code> to do the last iteration:</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span>uint64_t sum = </span><span style="color:#d08770;">0</span><span>;
+</span><span>uint64_t i = </span><span style="color:#d08770;">0</span><span>;
+</span><span>
+</span><span style="color:#b48ead;">while </span><span style="color:#d08770;">1 </span><span>{
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
+</span><span>        sum += i;
+</span><span>    i += </span><span style="color:#d08770;">1</span><span>;
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(i == n) {
+</span><span>        </span><span style="color:#b48ead;">break</span><span>;
+</span><span>    }
+</span><span>}
+</span><span style="color:#65737e;">// Or, equivalently:
+</span><span style="color:#b48ead;">do </span><span>{
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
+</span><span>        sum += i;
+</span><span>    i += </span><span style="color:#d08770;">1</span><span>;
+</span><span>} </span><span style="color:#b48ead;">while</span><span>(i &lt; n)
+</span></code></pre>
+
+
+        
+    
+
+        
+        
+    </article></div>
+    <div class="pagination">
+        <div class="pagination__buttons">
+            </div>
+    </div>
+<footer class="footer">
+                    <div class="footer__inner"><div class="copyright">
+            <span>© 2024 Tinusgraglin <span/>
+            <span>:: Powered by <a href="https://www.getzola.org/">Zola</a>(<a href="https://www.rust-lang.org/">Rust</a>) and <a href="https://bun.sh">Bun</a>(<a href="https://ziglang.org">Zig</a>)</span>
+        </div>
+    <script type="text/javascript" src="/blog/assets/js/main.js"></script>
+</div>
+                    
+
+                </footer></div>
+    </body>
+</html>

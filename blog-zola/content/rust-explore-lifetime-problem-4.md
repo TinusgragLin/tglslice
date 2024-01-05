@@ -87,7 +87,7 @@ The actual meaning of this marker is defined in the [RFC](https://rust-lang.gith
 
 ---
 
-At first, I was confused by the fact that even though it is defined that fields
+At first, I was confused by the fact that even though it is [defined](https://doc.rust-lang.org/reference/destructors.html#destructors) that fields
 in a `struct` is dropped in declaration order, the compiler is still unable to
 conclude that `World.inspector` is dropped before `World.days`. And the Nomicon
 only talks about how the compiler is unable to determine the drop order of elements

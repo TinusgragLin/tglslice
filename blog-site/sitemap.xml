@@ -16,6 +16,9 @@
         <loc>/blog/categories/network/</loc>
     </url>
     <url>
+        <loc>/blog/categories/pitfalls/</loc>
+    </url>
+    <url>
         <loc>/blog/categories/quicknote/</loc>
     </url>
     <url>
@@ -26,6 +29,10 @@
     </url>
     <url>
         <loc>/blog/categories/thoughts-on-topic/</loc>
+    </url>
+    <url>
+        <loc>/blog/inclusive-range-loop-pitfall/</loc>
+        <lastmod>2024-01-05</lastmod>
     </url>
     <url>
         <loc>/blog/interval-scheduling/</loc>
@@ -117,6 +124,9 @@
     </url>
     <url>
         <loc>/blog/tags/mq/</loc>
+    </url>
+    <url>
+        <loc>/blog/tags/pitfalls/</loc>
     </url>
     <url>
         <loc>/blog/tags/pub-sub/</loc>
