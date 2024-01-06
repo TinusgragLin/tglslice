@@ -120,7 +120,9 @@ for i in 0..=n { ... }
 
 However, there might exist an optimization problem. For our specific case, only the
 rewritings in the last section and `fold` approach above triggers SIMD optimizations,
-`for i in 0..=n` and `for_each` approach does not.
+`for_each` triggers *some* optimization that I don't quite understand but pushes this
+approach to the most performant one. `for i in 0..=n`, however, trigger the fewest
+optimizations and is the slowest approach (~ 3 times slower than other approaches).
 
 ## An Attempt to Implement An Iterator for `RangeInclusive`
 
@@ -217,7 +219,8 @@ time of writing)!
 ## More Confusing
 
 What is more confusing is that when expanding the original iterator implementation
-into the equivalent code, the SIMD optimization also is not applied:
+into an equivalent loop, the SIMD optimization also is not applied, and it has even
+worse performance than `for i in 0..=n`:
 
 ```rust
 let mut cur = 0;
@@ -240,4 +243,8 @@ while !done {
 
 When looping over an inclusive-ended range, if the end could reach the largest
 representable value, use one of the loop variations mentioned in the first section,
-or, in Rust, use `fold`.
+or, in Rust, use `for_each` or `fold`.
+
+# Appendix - Benchmark Results in My Computer
+
+Check [here](https://gitee.com/tinusgraglin/loop-over-inclusive-range-test);

@@ -139,6 +139,11 @@
 				
 			</li>
 		
+			<li>
+				<a href="/blog/inclusive-range-loop-pitfall/#appendix-benchmark-results-in-my-computer">Appendix - Benchmark Results in My Computer</a>
+				
+			</li>
+		
 		</ul>
 		</div>
 </div>
@@ -232,7 +237,9 @@ range <code>[0, n]</code> into <code>[0, n)</code> and <code>n</code>:</p>
 </span></code></pre>
 <p>However, there might exist an optimization problem. For our specific case, only the
 rewritings in the last section and <code>fold</code> approach above triggers SIMD optimizations,
-<code>for i in 0..=n</code> and <code>for_each</code> approach does not.</p>
+<code>for_each</code> triggers <em>some</em> optimization that I don't quite understand but pushes this
+approach to the most performant one. <code>for i in 0..=n</code>, however, trigger the fewest
+optimizations and is the slowest approach (~ 3 times slower than other approaches).</p>
 <h2 id="an-attempt-to-implement-an-iterator-for-rangeinclusive">An Attempt to Implement An Iterator for <code>RangeInclusive</code><a class="zola-anchor" href="#an-attempt-to-implement-an-iterator-for-rangeinclusive" aria-label="Anchor link for: an-attempt-to-implement-an-iterator-for-rangeinclusive">§</a>
 </h2>
 <p>The problem with <code>for i in 0..=n</code> is that the use of <code>0..=n</code> (<code>RangeInclusive</code>) as an
@@ -313,7 +320,8 @@ time of writing)!</p>
 <h2 id="more-confusing">More Confusing<a class="zola-anchor" href="#more-confusing" aria-label="Anchor link for: more-confusing">§</a>
 </h2>
 <p>What is more confusing is that when expanding the original iterator implementation
-into the equivalent code, the SIMD optimization also is not applied:</p>
+into an equivalent loop, the SIMD optimization also is not applied, and it has even
+worse performance than <code>for i in 0..=n</code>:</p>
 <pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let mut</span><span> cur = </span><span style="color:#d08770;">0</span><span>;
 </span><span style="color:#b48ead;">let mut</span><span> done = </span><span style="color:#d08770;">false</span><span>;
 </span><span style="color:#b48ead;">while </span><span>!done {
@@ -333,7 +341,10 @@ into the equivalent code, the SIMD optimization also is not applied:</p>
 </h1>
 <p>When looping over an inclusive-ended range, if the end could reach the largest
 representable value, use one of the loop variations mentioned in the first section,
-or, in Rust, use <code>fold</code>.</p>
+or, in Rust, use <code>for_each</code> or <code>fold</code>.</p>
+<h1 id="appendix-benchmark-results-in-my-computer">Appendix - Benchmark Results in My Computer<a class="zola-anchor" href="#appendix-benchmark-results-in-my-computer" aria-label="Anchor link for: appendix-benchmark-results-in-my-computer">§</a>
+</h1>
+<p>Check <a href="https://gitee.com/tinusgraglin/loop-over-inclusive-range-test">here</a>;</p>
 
 
         
