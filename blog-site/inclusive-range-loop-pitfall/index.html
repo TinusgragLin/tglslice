@@ -64,6 +64,7 @@
             
     <div class="post-meta">
         <span class="post-date">2024.01.05
+                [Updated: 2024.01.06]
                 </span>
 
         <span class="post-author"></span>
@@ -88,8 +89,10 @@
 
             
     
-</header><p>Say we want to implement a function that sum up number 0 to <code>n</code> but excludes
-a particular &quot;bad number&quot;, this is easily acccomplished with a loop:</p>
+</header><h1 id="the-problem">The Problem<a class="zola-anchor" href="#the-problem" aria-label="Anchor link for: the-problem">§</a>
+</h1>
+<p>Say we want to implement a function that sum up number 0 to <code>n</code> but excludes
+a particular &quot;bad number&quot;, this is easily accomplished with a loop:</p>
 <pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#b48ead;">#define </span><span>BAD_NUMBER </span><span style="color:#d08770;">69
 </span><span>
 </span><span>uint64_t </span><span style="color:#8fa1b3;">sum_of_all_good</span><span>(uint32_t </span><span style="color:#bf616a;">n</span><span>) {
@@ -109,7 +112,7 @@ defined to be a <code>uint64</code> to avoid overflow. Assuming <code>n</code> i
 to a more primitive form, while-loop:</p>
 <pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span>uint64_t sum = </span><span style="color:#d08770;">0</span><span>;
 </span><span>uint64_t i = </span><span style="color:#d08770;">0</span><span>;
-</span><span style="color:#b48ead;">while</span><span> i &lt;= n {
+</span><span style="color:#b48ead;">while </span><span>(i &lt;= n) {
 </span><span>    </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
 </span><span>        sum += i;
 </span><span>    i += </span><span style="color:#d08770;">1</span><span>;
@@ -119,30 +122,145 @@ to a more primitive form, while-loop:</p>
 the end of the loop, <code>i</code> is incremented by 1, so at the last iteration, when
 <code>i</code> reaches <code>n</code>, <code>i</code> in incremented to <code>n + 1</code> at the end of the loop. Now <code>n</code>
 is a valid <code>uint32</code>, but <code>n + 1</code>? Not so sure: when <code>n == 2^32 - 1</code>, <code>n + 1</code>
-siliently (in C) turns to 0. So <code>i</code> goes back to <code>0</code> at the end of the last
+silently (in C) turns to 0. So <code>i</code> goes back to <code>0</code> at the end of the last
 iteration!</p>
 <p>The heart of this problem is the way we use the value of <code>i</code> to determine when
 the loop needs to end: when <code>i</code> is larger than <code>n</code>, which is not always possible.</p>
-<p>A more safer way is to say that when <code>i</code> equals to <code>n</code>, we are done <em>after</em> we
-use this <code>i</code> to do the last iteration:</p>
-<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span>uint64_t sum = </span><span style="color:#d08770;">0</span><span>;
-</span><span>uint64_t i = </span><span style="color:#d08770;">0</span><span>;
-</span><span>
-</span><span style="color:#b48ead;">while </span><span style="color:#d08770;">1 </span><span>{
+<p>A more safer loop condition is to test whether <code>i</code> equals to <code>n</code>: the idea is that
+when <code>i == n</code>, we are done <em>assuming</em> we have used this <code>i</code>, the very <strong>last</strong> <code>i</code>.
+Then for the two other steps in the loop (i.e. the consumption and the forwarding),
+both have to be before the check, and since the consumption needs to use the last
+<code>i</code>, the forwarding has to be before the consumption. However, now that the forwarding
+is the first step, we will miss the first <code>i</code>, so we need to manually add this case:</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#65737e;">// Solution 1:
+</span><span style="color:#b48ead;">if </span><span>(</span><span style="color:#d08770;">0 </span><span>!= BAD_NUMBER)
+</span><span>    sum += </span><span style="color:#d08770;">0</span><span>;
+</span><span style="color:#b48ead;">while </span><span>(</span><span style="color:#d08770;">1</span><span>) {
+</span><span>    i++;
 </span><span>    </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
 </span><span>        sum += i;
-</span><span>    i += </span><span style="color:#d08770;">1</span><span>;
-</span><span>    </span><span style="color:#b48ead;">if </span><span>(i == n) {
-</span><span>        </span><span style="color:#b48ead;">break</span><span>;
-</span><span>    }
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(i == n) </span><span style="color:#b48ead;">break</span><span>;
 </span><span>}
 </span><span style="color:#65737e;">// Or, equivalently:
 </span><span style="color:#b48ead;">do </span><span>{
+</span><span>    i++;
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
+</span><span>        sum += i;
+</span><span>} </span><span style="color:#b48ead;">while </span><span>(i &lt; n);
+</span></code></pre>
+<p>Another thing to note is that the 'normal' <code>while (i &lt; n) { ...; i++; }</code> code most
+people will write when <code>i</code> is specified to be in the range of <code>[0, n)</code> does not have
+this problem since it's always possible for <code>i</code> to be equal to <code>n</code>, which is the loop
+exit condition.</p>
+<p>From this observation, yet another way to solve the original problem is to split the
+range <code>[0, n]</code> into <code>[0, n)</code> and <code>n</code>:</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#65737e;">// Solution 2:
+</span><span style="color:#b48ead;">while </span><span>(i &lt; n) {
 </span><span>    </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
 </span><span>        sum += i;
 </span><span>    i += </span><span style="color:#d08770;">1</span><span>;
-</span><span>} </span><span style="color:#b48ead;">while</span><span>(i &lt; n)
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">if </span><span>(n != BAD_NUMBER)
+</span><span>    sum += n;
 </span></code></pre>
+<h1 id="the-rangeinclusive-iterator-optimization-problem-in-rust">The <code>RangeInclusive</code> Iterator Optimization Problem in Rust<a class="zola-anchor" href="#the-rangeinclusive-iterator-optimization-problem-in-rust" aria-label="Anchor link for: the-rangeinclusive-iterator-optimization-problem-in-rust">§</a>
+</h1>
+<p>In Rust, you have another way to avoid the aforementioned problem -- using ranges:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// 1. Use range in for-loop:
+</span><span style="color:#b48ead;">for</span><span> i in </span><span style="color:#d08770;">0</span><span>..=n { ... }
+</span><span style="color:#65737e;">// 2. Use range&#39;s internal iterator method:
+</span><span>(</span><span style="color:#d08770;">0</span><span>..=n).</span><span style="color:#96b5b4;">for_each</span><span>(|</span><span style="color:#bf616a;">i</span><span>| { ... })
+</span><span>(</span><span style="color:#d08770;">0</span><span>..=n).</span><span style="color:#96b5b4;">fold</span><span>(</span><span style="color:#d08770;">0</span><span>, |</span><span style="color:#bf616a;">i</span><span>| { ... })
+</span><span style="color:#65737e;">// ...
+</span></code></pre>
+<p>However, there might exist an optimization problem. For our specific case, only the
+rewritings in the last section and <code>fold</code> approach above triggers SIMD optimizations,
+<code>for i in 0..=n</code> and <code>for_each</code> approach does not.</p>
+<p>The problem with <code>for i in 0..=n</code> is that the use of <code>0..=n</code> (<code>RangeInclusive</code>) as an
+iterator is outside of the iterator itself, so the iterator needs to keep all the progress
+information as its data.</p>
+<p>Let's try to implement an iterator based on the two solutions presented in the previous
+section. For Solution 1, other than <code>current</code> and <code>end</code>, first we need to know whether we
+are at the start of the iterations, storing the start of the range or a simple Bool flag
+<code>has_passed_frist</code> is enough; second, note that we end the loop <strong>after</strong> the last consumption,
+but an iterator produces the next value or <code>EndOfIteration</code> <strong>before</strong> consumptions.
+Luckily, we can modify the original code a bit to adapt to this order:</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#65737e;">// Solution 1:
+</span><span style="color:#b48ead;">bool</span><span> done = </span><span style="color:#d08770;">false</span><span>;
+</span><span style="color:#b48ead;">if </span><span>(</span><span style="color:#d08770;">0 </span><span>!= BAD_NUMBER)
+</span><span>    sum += </span><span style="color:#d08770;">0</span><span>;
+</span><span style="color:#b48ead;">while </span><span>(</span><span style="color:#d08770;">1</span><span>) {
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(done) </span><span style="color:#b48ead;">break</span><span>;
+</span><span>    i++;
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(i == n) done = </span><span style="color:#d08770;">true</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
+</span><span>        sum += i;
+</span><span>}
+</span></code></pre>
+<p>For Solution 2, since both <code>current</code> and <code>end</code> won't change at the last iteration, we
+also need an state variable signifying the end of iterations, and that's it:</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#b48ead;">bool</span><span> done = </span><span style="color:#d08770;">false</span><span>;
+</span><span>
+</span><span style="color:#b48ead;">while </span><span>(i &lt; n) {
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(i != BAD_NUMBER)
+</span><span>        sum += i;
+</span><span>    i += </span><span style="color:#d08770;">1</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#65737e;">// When i == n
+</span><span style="color:#b48ead;">if </span><span>(n != BAD_NUMBER)
+</span><span>    sum += n;
+</span><span>done = </span><span style="color:#d08770;">true
+</span></code></pre>
+<p>Clearly, Solution 2 requires less state variables, so we'll implement Solution 2 as an
+iterator:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">struct </span><span>RangeInclusiveIter { </span><span style="color:#bf616a;">cur</span><span>: </span><span style="color:#b48ead;">u32</span><span>, </span><span style="color:#bf616a;">end</span><span>: </span><span style="color:#b48ead;">u32</span><span>, </span><span style="color:#bf616a;">done</span><span>: </span><span style="color:#b48ead;">bool </span><span>}
+</span><span style="color:#65737e;">// `Iterator::next` implementation:
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">next</span><span>(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>) -&gt; Option&lt;</span><span style="color:#b48ead;">Self::</span><span>Item&gt; {
+</span><span>    </span><span style="color:#b48ead;">if </span><span style="color:#bf616a;">self</span><span>.done { </span><span style="color:#b48ead;">return </span><span>None }
+</span><span>    Some(</span><span style="color:#b48ead;">if </span><span style="color:#bf616a;">self</span><span>.cur &lt; </span><span style="color:#bf616a;">self</span><span>.end {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> next = </span><span style="color:#bf616a;">self</span><span>.cur + </span><span style="color:#d08770;">1</span><span>;
+</span><span>        std::mem::replace(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>.cur, next)
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.done = </span><span style="color:#d08770;">true</span><span>;
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.cur
+</span><span>    })
+</span><span>}
+</span></code></pre>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let mut</span><span> r = RangeInclusiveIter { cur: </span><span style="color:#d08770;">0</span><span>, end: n, done: </span><span style="color:#d08770;">false </span><span>};
+</span><span style="color:#b48ead;">while </span><span>!</span><span style="color:#bf616a;">self</span><span>.done {
+</span><span>    </span><span style="color:#b48ead;">if</span><span> r.cur &lt; r.end {
+</span><span>        r.cur += </span><span style="color:#d08770;">1</span><span>;
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.done = </span><span style="color:#d08770;">true
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#96b5b4;">consume</span><span>(r.cur);
+</span><span>}
+</span></code></pre>
+<p>Apparently, the compiler is able to optimize this code into SIMD code that vastly
+boosts the performance.</p>
+<p>However, <code>larger..=smaller</code> is permitted and produces exactly
+<code>RangeInclusive { start: larger, end: smaller, ... }</code> and <code>RangeInclusive</code> <strong>itself</strong>
+implements <code>Iterator</code>, <code>RangeInclusive::next</code> has to take care of this case in
+the implementation:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// `Iterator::next` implementation for `RangeInclusive::next`:
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">next</span><span>(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>) -&gt; Option&lt;</span><span style="color:#b48ead;">Self::</span><span>Item&gt; {
+</span><span>    </span><span style="color:#65737e;">// ++++++++++++++++++++++++
+</span><span>    </span><span style="color:#b48ead;">if </span><span style="color:#bf616a;">self</span><span>.start &gt; </span><span style="color:#bf616a;">self</span><span>.end || </span><span style="color:#bf616a;">self</span><span>.done { </span><span style="color:#b48ead;">return </span><span>None }
+</span><span>    Some(</span><span style="color:#b48ead;">if </span><span style="color:#bf616a;">self</span><span>.start &lt; </span><span style="color:#bf616a;">self</span><span>.end {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> next = </span><span style="color:#bf616a;">self</span><span>.start + </span><span style="color:#d08770;">1</span><span>;
+</span><span>        std::mem::replace(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>.start, next)
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.done = </span><span style="color:#d08770;">true</span><span>;
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.start
+</span><span>    })
+</span><span>}
+</span></code></pre>
+<p>And this addition hinders the compiler from applying SIMD optimizations (at the
+time of writing)!</p>
 
 
         
