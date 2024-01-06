@@ -7,6 +7,9 @@ updated=2024-01-06
 [taxonomies]
 tags = ["pitfalls", "rust-language", "rust-pitfalls"]
 categories = ["pitfalls"]
+
+[extra]
+ToC=true
 +++
 
 # The Problem
@@ -51,6 +54,8 @@ the end of the loop, `i` is incremented by 1, so at the last iteration, when
 is a valid `uint32`, but `n + 1`? Not so sure: when `n == 2^32 - 1`, `n + 1`
 silently (in C) turns to 0. So `i` goes back to `0` at the end of the last
 iteration!
+
+## Solutions
 
 The heart of this problem is the way we use the value of `i` to determine when
 the loop needs to end: when `i` is larger than `n`, which is not always possible.
@@ -100,7 +105,7 @@ if (n != BAD_NUMBER)
     sum += n;
 ```
 
-# The `RangeInclusive` Iterator Optimization Problem in Rust
+# The `RangeInclusive` Iterator `next` Optimization Problem in Rust
 
 In Rust, you have another way to avoid the aforementioned problem -- using ranges:
 
@@ -116,6 +121,8 @@ for i in 0..=n { ... }
 However, there might exist an optimization problem. For our specific case, only the
 rewritings in the last section and `fold` approach above triggers SIMD optimizations,
 `for i in 0..=n` and `for_each` approach does not.
+
+## An Attempt to Implement An Iterator for `RangeInclusive`
 
 The problem with `for i in 0..=n` is that the use of `0..=n` (`RangeInclusive`) as an
 iterator is outside of the iterator itself, so the iterator needs to keep all the progress
@@ -179,21 +186,10 @@ fn next(&mut self) -> Option<Self::Item> {
 }
 ```
 
-```rust
-let mut r = RangeInclusiveIter { cur: 0, end: n, done: false };
-while !self.done {
-    if r.cur < r.end {
-        r.cur += 1;
-    } else {
-        self.done = true
-    }
+Apparently, when using this iterator, the compiler is able to optimize the code
+into SIMD code that vastly boosts the performance.
 
-    consume(r.cur);
-}
-```
-
-Apparently, the compiler is able to optimize this code into SIMD code that vastly
-boosts the performance.
+## A Line of Change
 
 However, `larger..=smaller` is permitted and produces exactly
 `RangeInclusive { start: larger, end: smaller, ... }` and `RangeInclusive` **itself**
@@ -217,3 +213,31 @@ fn next(&mut self) -> Option<Self::Item> {
 
 And this addition hinders the compiler from applying SIMD optimizations (at the
 time of writing)!
+
+## More Confusing
+
+What is more confusing is that when expanding the original iterator implementation
+into the equivalent code, the SIMD optimization also is not applied:
+
+```rust
+let mut cur = 0;
+let mut done = false;
+while !done {
+    let i = if cur < n {
+        let next = cur + 1;
+        std::mem::replace(&mut cur, next)
+    } else {
+        done = true;
+        cur
+    };
+    if i != BAD_NUMBER {
+        sum += i as u64
+    }
+}
+```
+
+# Conclusion
+
+When looping over an inclusive-ended range, if the end could reach the largest
+representable value, use one of the loop variations mentioned in the first section,
+or, in Rust, use `fold`.

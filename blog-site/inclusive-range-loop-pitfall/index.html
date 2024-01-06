@@ -89,6 +89,60 @@
 
             
     
+
+
+<div class="toc" id="nav-container">
+	<p class="toc-head">Table of Contents</p>
+		<div id="nav-content" >
+		<ul>
+		
+			<li>
+				<a href="/blog/inclusive-range-loop-pitfall/#the-problem">The Problem</a>
+				
+					<ul>
+						
+							<li>
+								<a href="/blog/inclusive-range-loop-pitfall/#solutions">Solutions</a>
+							</li>
+							
+						
+					</ul>
+				
+			</li>
+		
+			<li>
+				<a href="/blog/inclusive-range-loop-pitfall/#the-rangeinclusive-iterator-next-optimization-problem-in-rust">The RangeInclusive Iterator next Optimization Problem in Rust</a>
+				
+					<ul>
+						
+							<li>
+								<a href="/blog/inclusive-range-loop-pitfall/#an-attempt-to-implement-an-iterator-for-rangeinclusive">An Attempt to Implement An Iterator for RangeInclusive</a>
+							</li>
+							
+						
+							<li>
+								<a href="/blog/inclusive-range-loop-pitfall/#a-line-of-change">A Line of Change</a>
+							</li>
+							
+						
+							<li>
+								<a href="/blog/inclusive-range-loop-pitfall/#more-confusing">More Confusing</a>
+							</li>
+							
+						
+					</ul>
+				
+			</li>
+		
+			<li>
+				<a href="/blog/inclusive-range-loop-pitfall/#conclusion">Conclusion</a>
+				
+			</li>
+		
+		</ul>
+		</div>
+</div>
+
 </header><h1 id="the-problem">The Problem<a class="zola-anchor" href="#the-problem" aria-label="Anchor link for: the-problem">§</a>
 </h1>
 <p>Say we want to implement a function that sum up number 0 to <code>n</code> but excludes
@@ -124,6 +178,8 @@ the end of the loop, <code>i</code> is incremented by 1, so at the last iteratio
 is a valid <code>uint32</code>, but <code>n + 1</code>? Not so sure: when <code>n == 2^32 - 1</code>, <code>n + 1</code>
 silently (in C) turns to 0. So <code>i</code> goes back to <code>0</code> at the end of the last
 iteration!</p>
+<h2 id="solutions">Solutions<a class="zola-anchor" href="#solutions" aria-label="Anchor link for: solutions">§</a>
+</h2>
 <p>The heart of this problem is the way we use the value of <code>i</code> to determine when
 the loop needs to end: when <code>i</code> is larger than <code>n</code>, which is not always possible.</p>
 <p>A more safer loop condition is to test whether <code>i</code> equals to <code>n</code>: the idea is that
@@ -164,7 +220,7 @@ range <code>[0, n]</code> into <code>[0, n)</code> and <code>n</code>:</p>
 </span><span style="color:#b48ead;">if </span><span>(n != BAD_NUMBER)
 </span><span>    sum += n;
 </span></code></pre>
-<h1 id="the-rangeinclusive-iterator-optimization-problem-in-rust">The <code>RangeInclusive</code> Iterator Optimization Problem in Rust<a class="zola-anchor" href="#the-rangeinclusive-iterator-optimization-problem-in-rust" aria-label="Anchor link for: the-rangeinclusive-iterator-optimization-problem-in-rust">§</a>
+<h1 id="the-rangeinclusive-iterator-next-optimization-problem-in-rust">The <code>RangeInclusive</code> Iterator <code>next</code> Optimization Problem in Rust<a class="zola-anchor" href="#the-rangeinclusive-iterator-next-optimization-problem-in-rust" aria-label="Anchor link for: the-rangeinclusive-iterator-next-optimization-problem-in-rust">§</a>
 </h1>
 <p>In Rust, you have another way to avoid the aforementioned problem -- using ranges:</p>
 <pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// 1. Use range in for-loop:
@@ -177,6 +233,8 @@ range <code>[0, n]</code> into <code>[0, n)</code> and <code>n</code>:</p>
 <p>However, there might exist an optimization problem. For our specific case, only the
 rewritings in the last section and <code>fold</code> approach above triggers SIMD optimizations,
 <code>for i in 0..=n</code> and <code>for_each</code> approach does not.</p>
+<h2 id="an-attempt-to-implement-an-iterator-for-rangeinclusive">An Attempt to Implement An Iterator for <code>RangeInclusive</code><a class="zola-anchor" href="#an-attempt-to-implement-an-iterator-for-rangeinclusive" aria-label="Anchor link for: an-attempt-to-implement-an-iterator-for-rangeinclusive">§</a>
+</h2>
 <p>The problem with <code>for i in 0..=n</code> is that the use of <code>0..=n</code> (<code>RangeInclusive</code>) as an
 iterator is outside of the iterator itself, so the iterator needs to keep all the progress
 information as its data.</p>
@@ -229,19 +287,10 @@ iterator:</p>
 </span><span>    })
 </span><span>}
 </span></code></pre>
-<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let mut</span><span> r = RangeInclusiveIter { cur: </span><span style="color:#d08770;">0</span><span>, end: n, done: </span><span style="color:#d08770;">false </span><span>};
-</span><span style="color:#b48ead;">while </span><span>!</span><span style="color:#bf616a;">self</span><span>.done {
-</span><span>    </span><span style="color:#b48ead;">if</span><span> r.cur &lt; r.end {
-</span><span>        r.cur += </span><span style="color:#d08770;">1</span><span>;
-</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
-</span><span>        </span><span style="color:#bf616a;">self</span><span>.done = </span><span style="color:#d08770;">true
-</span><span>    }
-</span><span>
-</span><span>    </span><span style="color:#96b5b4;">consume</span><span>(r.cur);
-</span><span>}
-</span></code></pre>
-<p>Apparently, the compiler is able to optimize this code into SIMD code that vastly
-boosts the performance.</p>
+<p>Apparently, when using this iterator, the compiler is able to optimize the code
+into SIMD code that vastly boosts the performance.</p>
+<h2 id="a-line-of-change">A Line of Change<a class="zola-anchor" href="#a-line-of-change" aria-label="Anchor link for: a-line-of-change">§</a>
+</h2>
 <p>However, <code>larger..=smaller</code> is permitted and produces exactly
 <code>RangeInclusive { start: larger, end: smaller, ... }</code> and <code>RangeInclusive</code> <strong>itself</strong>
 implements <code>Iterator</code>, <code>RangeInclusive::next</code> has to take care of this case in
@@ -261,6 +310,30 @@ the implementation:</p>
 </span></code></pre>
 <p>And this addition hinders the compiler from applying SIMD optimizations (at the
 time of writing)!</p>
+<h2 id="more-confusing">More Confusing<a class="zola-anchor" href="#more-confusing" aria-label="Anchor link for: more-confusing">§</a>
+</h2>
+<p>What is more confusing is that when expanding the original iterator implementation
+into the equivalent code, the SIMD optimization also is not applied:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let mut</span><span> cur = </span><span style="color:#d08770;">0</span><span>;
+</span><span style="color:#b48ead;">let mut</span><span> done = </span><span style="color:#d08770;">false</span><span>;
+</span><span style="color:#b48ead;">while </span><span>!done {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> i = </span><span style="color:#b48ead;">if</span><span> cur &lt; n {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> next = cur + </span><span style="color:#d08770;">1</span><span>;
+</span><span>        std::mem::replace(&amp;</span><span style="color:#b48ead;">mut</span><span> cur, next)
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        done = </span><span style="color:#d08770;">true</span><span>;
+</span><span>        cur
+</span><span>    };
+</span><span>    </span><span style="color:#b48ead;">if</span><span> i != </span><span style="color:#d08770;">BAD_NUMBER </span><span>{
+</span><span>        sum += i as </span><span style="color:#b48ead;">u64
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h1 id="conclusion">Conclusion<a class="zola-anchor" href="#conclusion" aria-label="Anchor link for: conclusion">§</a>
+</h1>
+<p>When looping over an inclusive-ended range, if the end could reach the largest
+representable value, use one of the loop variations mentioned in the first section,
+or, in Rust, use <code>fold</code>.</p>
 
 
         
