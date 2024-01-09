@@ -43,6 +43,10 @@
         <lastmod>2022-10-01</lastmod>
     </url>
     <url>
+        <loc>/blog/morris-traveral/</loc>
+        <lastmod>2024-01-09</lastmod>
+    </url>
+    <url>
         <loc>/blog/mq-pubsub/</loc>
         <lastmod>2023-03-14</lastmod>
     </url>
@@ -58,15 +62,6 @@
     </url>
     <url>
         <loc>/blog/page/3/</loc>
-    </url>
-    <url>
-        <loc>/blog/page/4/</loc>
-    </url>
-    <url>
-        <loc>/blog/page/5/</loc>
-    </url>
-    <url>
-        <loc>/blog/page/6/</loc>
     </url>
     <url>
         <loc>/blog/qknt-raft-0/</loc>
@@ -118,6 +113,9 @@
     </url>
     <url>
         <loc>/blog/tags/</loc>
+    </url>
+    <url>
+        <loc>/blog/tags/btree-traversal/</loc>
     </url>
     <url>
         <loc>/blog/tags/greedy-algo/</loc>
