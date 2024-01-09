@@ -64,6 +64,7 @@
             
     <div class="post-meta">
         <span class="post-date">2024.01.09
+                [Updated: 2024.01.09]
                 </span>
 
         <span class="post-author"></span>
@@ -127,6 +128,16 @@
 							
 						
 					</ul>
+				
+			</li>
+		
+			<li>
+				<a href="/blog/morris-traveral/#the-final-code">The Final Code</a>
+				
+			</li>
+		
+			<li>
+				<a href="/blog/morris-traveral/#yet-another-way-to-understand-it">Yet Another Way to Understand It</a>
 				
 			</li>
 		
@@ -240,7 +251,9 @@ destruction. When is the end of the traversal of this left sub-tree? Exactly whe
 visit the <code>Root</code>, which, if you look back a little, is exactly when we can determine that a
 node is the <code>Root</code>, since its left sub-tree is ignored. So yes, if we can determine that
 a node is a <code>Root</code> by checking if its <code>RM_LST</code> points to it, we should do the repairing!</p>
-<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#b48ead;">void </span><span style="color:#8fa1b3;">rst_in_order_traversal</span><span>(Node *</span><span style="color:#bf616a;">root</span><span>) {
+<h1 id="the-final-code">The Final Code<a class="zola-anchor" href="#the-final-code" aria-label="Anchor link for: the-final-code">§</a>
+</h1>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#b48ead;">void </span><span style="color:#8fa1b3;">in_order_traversal</span><span>(Node *</span><span style="color:#bf616a;">root</span><span>) {
 </span><span>    Node *cur_root = root;
 </span><span>    </span><span style="color:#b48ead;">while </span><span>(cur_root != </span><span style="color:#d08770;">NULL</span><span>) {
 </span><span>        </span><span style="color:#b48ead;">if </span><span>(cur_root.</span><span style="color:#bf616a;">left </span><span>== </span><span style="color:#d08770;">NULL</span><span>) {
@@ -271,6 +284,16 @@ a node is a <code>Root</code> by checking if its <code>RM_LST</code> points to i
 </span><span>    }
 </span><span>}
 </span></code></pre>
+<h1 id="yet-another-way-to-understand-it">Yet Another Way to Understand It<a class="zola-anchor" href="#yet-another-way-to-understand-it" aria-label="Anchor link for: yet-another-way-to-understand-it">§</a>
+</h1>
+<p>When in-order traverse a tree, if the left sub-tree is empty, we visit the root
+and turns to the right sub-tree, if the left sub-tree is not empty, we have to
+dive in to the left sub-tree first.</p>
+<p>But before we dive in to the left sub-tree, make the last node to visit in the
+left sub-tree (i.e. <code>RM_LST</code>) links to the root, so we automatically go back to
+the root, and when we do go back to the root (i.e. when its <code>RM_LST</code> points to it),
+the left sub-tree is done, so we delete the added link and turns to the right
+sub-tree.</p>
 
 
         

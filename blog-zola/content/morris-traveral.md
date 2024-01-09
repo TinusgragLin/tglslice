@@ -2,6 +2,7 @@
 title="O(1) Extra Space Iterative BTree In-order Traversal - Morris Traversal"
 description="From the joy of no left sub-tree."
 date=2024-01-09
+updated=2024-01-09
 
 [taxonomies]
 tags = ["btree traversal"]
@@ -137,8 +138,10 @@ visit the `Root`, which, if you look back a little, is exactly when we can deter
 node is the `Root`, since its left sub-tree is ignored. So yes, if we can determine that
 a node is a `Root` by checking if its `RM_LST` points to it, we should do the repairing!
 
+# The Final Code
+
 ```c
-void rst_in_order_traversal(Node *root) {
+void in_order_traversal(Node *root) {
     Node *cur_root = root;
     while (cur_root != NULL) {
         if (cur_root.left == NULL) {
@@ -169,3 +172,15 @@ void rst_in_order_traversal(Node *root) {
     }
 }
 ```
+
+# Yet Another Way to Understand It
+
+When in-order traverse a tree, if the left sub-tree is empty, we visit the root
+and turns to the right sub-tree, if the left sub-tree is not empty, we have to
+dive in to the left sub-tree first.
+
+But before we dive in to the left sub-tree, make the last node to visit in the
+left sub-tree (i.e. `RM_LST`) links to the root, so we automatically go back to
+the root, and when we do go back to the root (i.e. when its `RM_LST` points to it),
+the left sub-tree is done, so we delete the added link and turns to the right
+sub-tree.
