@@ -1,11 +1,11 @@
 +++
-title="O(1) Extra Space Iterative BTree In-order Traversal - Morris Traversal"
+title="O(1) Extra Space Iterative Binary Tree Traversal - Morris Traversal"
 description="From the joy of no left sub-tree."
 date=2024-01-09
-updated=2024-01-09
+updated=2024-01-10
 
 [taxonomies]
-tags = ["btree traversal"]
+tags = ["tree traversal"]
 categories = ["algo"]
 
 [extra]
@@ -22,8 +22,8 @@ is larger than the root. In 1979, Joseph M. Morris published his solution that
 assumes nothing.
 
 In the blog post, I will try to present (from my understanding) the key ideas of
-[the 1975 paper](https://doi.org/10.1016/0020-0190(79)90068-1) and develop the algorithm following the paper with these key
-ideas.
+[the 1975 paper](https://doi.org/10.1016/0020-0190(79)90068-1) and develop the
+algorithm following the paper with these key ideas.
 
 # Traverse a Right-skewed Tree (RST) is Too Easy
 
@@ -163,8 +163,8 @@ void in_order_traversal(Node *root) {
                 // is a `Root`, we do the repairing:
                 p.r = NULL;
 
-                // We ignore the sub-tree of `cur_root` since it's a `Root`, and turns
-                // to its right sub-tree:
+                // We ignore the sub-tree of `cur_root` since it's a `Root`, visit the
+                // root and turns to its right sub-tree:
                 visit(cur_root);
                 cur_root = cur_root.right;
             }
@@ -184,3 +184,74 @@ left sub-tree (i.e. `RM_LST`) links to the root, so we automatically go back to
 the root, and when we do go back to the root (i.e. when its `RM_LST` points to it),
 the left sub-tree is done, so we delete the added link and turns to the right
 sub-tree.
+
+# Variations
+
+## Pre-order
+
+Pre-order traversal can also be done in this manner with one line of modification.
+Although in pre-order case, the last node to visit in the left sub-tree isn't `RM_LST`,
+link it towards the root still preserve the traversal order **if** we not only ignore
+a `Root`'s left sub-tree, but also ignore the `Root` itself (i.e. do not visit) when
+we meet one:
+
+```c
+void pre_order_traversal(Node *root) {
+    Node *cur_root = root;
+    while (cur_root != NULL) {
+        if (cur_root.left == NULL) {
+            visit(cur_root);
+            cur_root = cur_root.right;
+        } else {
+            // The left sub-tree is not empty!
+
+            // Find RM_LST (that either has been modified and has not been modified):
+            Node *p = cur_root.left;
+            while (p.r != NULL || p.r != cur_root) p = p.r;
+
+            if (p.r == NULL) {
+                // Get a RM_LST that has not been modified, we do the transform:
+                p.r = cur_root;
+                // Before we dive in to the left sub-tree, visit the root:
+                visit(cur_root);
+                cur_root = cur_root.left;
+            } else {
+                // Get a RM_LST that has been modified, so we just find that `cur_root`
+                // is a `Root`, we do the repairing:
+                p.r = NULL;
+
+                // Since `cur_root` is a `Root`, it has been visited, we ignore it and its
+                // left sub-tree, turn right to its right sub-tree:
+                cur_root = cur_root.right;
+            }
+        }
+    }
+}
+```
+
+## Post-order
+
+In post-order case, to make the transform will still preserve the traversal order,
+let's think about that in the original traversal, what would happen when the `RM_LST`
+is being handled: first its left sub-tree is handled, and then itself get visited
+since it has an empty right sub-tree. Now `RM_LST` is completed handled, so we go
+back to its parent, since `RM_LST` is the right child of its parent, its parent is
+immediately visited and completed handled, this chain continues to the left child of
+the `Root`, in which moment the left sub-tree of the `Root` is completed handled, so
+we now turn to the right sub-tree.
+
+```
+1. (RM_LST left sub-tree traversal)
+2. RM_LST (RM_LST's Parent) (RM_LST's Grandparent) ... (Root's Left Child)
+3. (Root's right sub-tree traversal) Root
+```
+
+In the transformed tree, 
+
+```
+1. (RM_LST left sub-tree traversal)
+2. (Root's right sub-tree traversal) Root
+3. RM_LST (RM_LST's Parent) (RM_LST's Grandparent) ... (Root's Left Child)
+```
+
+Clearly

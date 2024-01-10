@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-    <title>O(1) Extra Space Iterative BTree In-order Traversal - Morris Traversal - Tinusgraglin</title>
+    <title>O(1) Extra Space Iterative Binary Tree Traversal - Morris Traversal - Tinusgraglin</title>
     
     
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"><meta name="description" content="A Slice O(1) Extra Space Iterative BTree In-order Traversal - Morris Traversal From the joy of no left sub-tree."/><meta name="keywords" content="algo, btree traversal" />
-    <meta property="og:title" content="A Slice of Tgl -&nbsp;O(1) Extra Space Iterative BTree In-order Traversal - Morris Traversal" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"><meta name="description" content="A Slice O(1) Extra Space Iterative Binary Tree Traversal - Morris Traversal From the joy of no left sub-tree."/><meta name="keywords" content="algo, tree traversal" />
+    <meta property="og:title" content="A Slice of Tgl -&nbsp;O(1) Extra Space Iterative Binary Tree Traversal - Morris Traversal" />
     <meta property="og:type" content="website"/><meta property="og:url" content="&#x2F;blog&#x2F;morris-traveral&#x2F;"/><meta property="og:description" content="From the joy of no left sub-tree."/>
     <link rel="preload" href="/blog/assets/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="/blog/assets/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -59,12 +59,12 @@
 <div class="content"><article class="post">
         <header>
             <h1 class="post-title">
-                <a href="&#x2F;blog&#x2F;morris-traveral&#x2F;">O(1) Extra Space Iterative BTree In-order Traversal - Morris Traversal</a>
+                <a href="&#x2F;blog&#x2F;morris-traveral&#x2F;">O(1) Extra Space Iterative Binary Tree Traversal - Morris Traversal</a>
             </h1>
             
     <div class="post-meta">
         <span class="post-date">2024.01.09
-                [Updated: 2024.01.09]
+                [Updated: 2024.01.10]
                 </span>
 
         <span class="post-author"></span>
@@ -76,7 +76,7 @@
 
             
     ::
-    #<a href="/blog/tags/btree-traversal/">btree traversal</a>
+    #<a href="/blog/tags/tree-traversal/">tree traversal</a>
         
     
             
@@ -141,6 +141,25 @@
 				
 			</li>
 		
+			<li>
+				<a href="/blog/morris-traveral/#variations">Variations</a>
+				
+					<ul>
+						
+							<li>
+								<a href="/blog/morris-traveral/#pre-order">Pre-order</a>
+							</li>
+							
+						
+							<li>
+								<a href="/blog/morris-traveral/#post-order">Post-order</a>
+							</li>
+							
+						
+					</ul>
+				
+			</li>
+		
 		</ul>
 		</div>
 </div>
@@ -154,8 +173,8 @@ bits. In 1975, W.A. Burkhard came up with one that assumes all children nodes' a
 is larger than the root. In 1979, Joseph M. Morris published his solution that
 assumes nothing.</p>
 <p>In the blog post, I will try to present (from my understanding) the key ideas of
-<a href="https://doi.org/10.1016/0020-0190(79)90068-1">the 1975 paper</a> and develop the algorithm following the paper with these key
-ideas.</p>
+<a href="https://doi.org/10.1016/0020-0190(79)90068-1">the 1975 paper</a> and develop the
+algorithm following the paper with these key ideas.</p>
 <h1 id="traverse-a-right-skewed-tree-rst-is-too-easy">Traverse a Right-skewed Tree (RST) is Too Easy<a class="zola-anchor" href="#traverse-a-right-skewed-tree-rst-is-too-easy" aria-label="Anchor link for: traverse-a-right-skewed-tree-rst-is-too-easy">§</a>
 </h1>
 <p>A right-skewed binary tree (right-skewed tree, or RST in the later discussion) is
@@ -275,8 +294,8 @@ a node is a <code>Root</code> by checking if its <code>RM_LST</code> points to i
 </span><span>                </span><span style="color:#65737e;">// is a `Root`, we do the repairing:
 </span><span>                p.</span><span style="color:#bf616a;">r </span><span>= </span><span style="color:#d08770;">NULL</span><span>;
 </span><span>
-</span><span>                </span><span style="color:#65737e;">// We ignore the sub-tree of `cur_root` since it&#39;s a `Root`, and turns
-</span><span>                </span><span style="color:#65737e;">// to its right sub-tree:
+</span><span>                </span><span style="color:#65737e;">// We ignore the sub-tree of `cur_root` since it&#39;s a `Root`, visit the
+</span><span>                </span><span style="color:#65737e;">// root and turns to its right sub-tree:
 </span><span>                </span><span style="color:#bf616a;">visit</span><span>(cur_root);
 </span><span>                cur_root = cur_root.</span><span style="color:#bf616a;">right</span><span>;
 </span><span>            }
@@ -294,6 +313,67 @@ left sub-tree (i.e. <code>RM_LST</code>) links to the root, so we automatically 
 the root, and when we do go back to the root (i.e. when its <code>RM_LST</code> points to it),
 the left sub-tree is done, so we delete the added link and turns to the right
 sub-tree.</p>
+<h1 id="variations">Variations<a class="zola-anchor" href="#variations" aria-label="Anchor link for: variations">§</a>
+</h1>
+<h2 id="pre-order">Pre-order<a class="zola-anchor" href="#pre-order" aria-label="Anchor link for: pre-order">§</a>
+</h2>
+<p>Pre-order traversal can also be done in this manner with one line of modification.
+Although in pre-order case, the last node to visit in the left sub-tree isn't <code>RM_LST</code>,
+link it towards the root still preserve the traversal order <strong>if</strong> we not only ignore
+a <code>Root</code>'s left sub-tree, but also ignore the <code>Root</code> itself (i.e. do not visit) when
+we meet one:</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#b48ead;">void </span><span style="color:#8fa1b3;">pre_order_traversal</span><span>(Node *</span><span style="color:#bf616a;">root</span><span>) {
+</span><span>    Node *cur_root = root;
+</span><span>    </span><span style="color:#b48ead;">while </span><span>(cur_root != </span><span style="color:#d08770;">NULL</span><span>) {
+</span><span>        </span><span style="color:#b48ead;">if </span><span>(cur_root.</span><span style="color:#bf616a;">left </span><span>== </span><span style="color:#d08770;">NULL</span><span>) {
+</span><span>            </span><span style="color:#bf616a;">visit</span><span>(cur_root);
+</span><span>            cur_root = cur_root.</span><span style="color:#bf616a;">right</span><span>;
+</span><span>        } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>            </span><span style="color:#65737e;">// The left sub-tree is not empty!
+</span><span>
+</span><span>            </span><span style="color:#65737e;">// Find RM_LST (that either has been modified and has not been modified):
+</span><span>            Node *p = cur_root.</span><span style="color:#bf616a;">left</span><span>;
+</span><span>            </span><span style="color:#b48ead;">while </span><span>(p.</span><span style="color:#bf616a;">r </span><span>!= </span><span style="color:#d08770;">NULL </span><span>|| p.</span><span style="color:#bf616a;">r </span><span>!= cur_root) p = p.</span><span style="color:#bf616a;">r</span><span>;
+</span><span>
+</span><span>            </span><span style="color:#b48ead;">if </span><span>(p.</span><span style="color:#bf616a;">r </span><span>== </span><span style="color:#d08770;">NULL</span><span>) {
+</span><span>                </span><span style="color:#65737e;">// Get a RM_LST that has not been modified, we do the transform:
+</span><span>                p.</span><span style="color:#bf616a;">r </span><span>= cur_root;
+</span><span>                </span><span style="color:#65737e;">// Before we dive in to the left sub-tree, visit the root:
+</span><span>                </span><span style="color:#bf616a;">visit</span><span>(cur_root);
+</span><span>                cur_root = cur_root.</span><span style="color:#bf616a;">left</span><span>;
+</span><span>            } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>                </span><span style="color:#65737e;">// Get a RM_LST that has been modified, so we just find that `cur_root`
+</span><span>                </span><span style="color:#65737e;">// is a `Root`, we do the repairing:
+</span><span>                p.</span><span style="color:#bf616a;">r </span><span>= </span><span style="color:#d08770;">NULL</span><span>;
+</span><span>
+</span><span>                </span><span style="color:#65737e;">// Since `cur_root` is a `Root`, it has been visited, we ignore it and its
+</span><span>                </span><span style="color:#65737e;">// left sub-tree, turn right to its right sub-tree:
+</span><span>                cur_root = cur_root.</span><span style="color:#bf616a;">right</span><span>;
+</span><span>            }
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h2 id="post-order">Post-order<a class="zola-anchor" href="#post-order" aria-label="Anchor link for: post-order">§</a>
+</h2>
+<p>In post-order case, to make the transform will still preserve the traversal order,
+let's think about that in the original traversal, what would happen when the <code>RM_LST</code>
+is being handled: first its left sub-tree is handled, and then itself get visited
+since it has an empty right sub-tree. Now <code>RM_LST</code> is completed handled, so we go
+back to its parent, since <code>RM_LST</code> is the right child of its parent, its parent is
+immediately visited and completed handled, this chain continues to the left child of
+the <code>Root</code>, in which moment the left sub-tree of the <code>Root</code> is completed handled, so
+we now turn to the right sub-tree.</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>1. (RM_LST left sub-tree traversal)
+</span><span>2. RM_LST (RM_LST&#39;s Parent) (RM_LST&#39;s Grandparent) ... (Root&#39;s Left Child)
+</span><span>3. (Root&#39;s right sub-tree traversal) Root
+</span></code></pre>
+<p>In the transformed tree, </p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>1. (RM_LST left sub-tree traversal)
+</span><span>2. (Root&#39;s right sub-tree traversal) Root
+</span><span>3. RM_LST (RM_LST&#39;s Parent) (RM_LST&#39;s Grandparent) ... (Root&#39;s Left Child)
+</span></code></pre>
+<p>Clearly</p>
 
 
         
