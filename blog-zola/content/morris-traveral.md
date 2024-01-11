@@ -2,7 +2,7 @@
 title="O(1) Extra Space Iterative Binary Tree Traversal - Morris Traversal"
 description="From the joy of no left sub-tree."
 date=2024-01-09
-updated=2024-01-10
+updated=2024-01-11
 
 [taxonomies]
 tags = ["tree traversal"]
@@ -231,13 +231,13 @@ void pre_order_traversal(Node *root) {
 
 ## Post-order
 
-In post-order case, to make the transform will still preserve the traversal order,
-let's think about that in the original traversal, what would happen when the `RM_LST`
+In post-order case, to make the transform still preserve the traversal order,
+let's think about that in the original traversal, what would happen **when** the `RM_LST`
 is being handled: first its left sub-tree is handled, and then itself get visited
-since it has an empty right sub-tree. Now `RM_LST` is completed handled, so we go
+since it has an empty right sub-tree. Now `RM_LST` is completely handled, so we go
 back to its parent, since `RM_LST` is the right child of its parent, its parent is
-immediately visited and completed handled, this chain continues to the left child of
-the `Root`, in which moment the left sub-tree of the `Root` is completed handled, so
+immediately visited and completely handled, this chain continues to the left child of
+the `Root`, in which moment the left sub-tree of the `Root` is completely handled, so
 we now turn to the right sub-tree.
 
 ```
@@ -246,7 +246,7 @@ we now turn to the right sub-tree.
 3. (Root's right sub-tree traversal) Root
 ```
 
-In the transformed tree, 
+For the transformed tree, the traversal order starting from `RM_LST` is:
 
 ```
 1. (RM_LST left sub-tree traversal)
@@ -254,4 +254,48 @@ In the transformed tree,
 3. RM_LST (RM_LST's Parent) (RM_LST's Grandparent) ... (Root's Left Child)
 ```
 
-Clearly
+Clearly, we need visit the `RM_LST (RM_LST's Parent) ... (Root's Left Child)` chain
+right after `RM_LST`'s left sub-tree is done. Since `RM_LST` right-links the `Root`
+in the transformed tree, that's exactly when we meet the `Root` for the second time.
+(Note: the visit chain is in the reverse order of the actual link chain, so **more extra
+space may be needed**, breaking the O(1) extra space promise)
+
+It can be proved (for example, by induction) that the visit chain above is enough for
+the procedure to visit all but those in the right link chain of the root (including the
+root) in post-order fashion. Those excluded happen to be the last ones to visit. To deal
+with this, the paper proposed to add a fake root that left-links to the real root:
+
+```c
+void post_order_traversal(Node *root) {
+    Node *fake_root = new_node_with_children(root, NULL);
+
+    Node *cur_root = fake_root;
+    while (cur_root != NULL) {
+        if (cur_root.left == NULL) {
+            cur_root = cur_root.right;
+        } else {
+            // The left sub-tree is not empty!
+
+            // Find RM_LST (that either has been modified and has not been modified):
+            Node *p = cur_root.left;
+            while (p.r != NULL || p.r != cur_root) p = p.r;
+
+            if (p.r == NULL) {
+                // Get a RM_LST that has not been modified, we do the transform:
+                p.r = cur_root;
+                cur_root = cur_root.left;
+            } else {
+                // Get a RM_LST that has been modified, so we just find that `cur_root`
+                // is a `Root`, we do the repairing:
+                p.r = NULL;
+
+                visit_rightlink_chain_in_reverse(cur_root.left);
+
+                // We ignore the sub-tree of `cur_root` since it's a `Root`, turns to
+                // its right sub-tree:
+                cur_root = cur_root.right;
+            }
+        }
+    }
+}
+```
