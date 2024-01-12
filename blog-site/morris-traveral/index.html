@@ -375,10 +375,10 @@ we now turn to the right sub-tree.</p>
 </span></code></pre>
 <p>Clearly, we need visit the <code>RM_LST (RM_LST's Parent) ... (Root's Left Child)</code> chain
 right after <code>RM_LST</code>'s left sub-tree is done. Since <code>RM_LST</code> right-links the <code>Root</code>
-in the transformed tree, that's exactly when we meet the <code>Root</code> for the second time.
-(Note: the visit chain is in the reverse order of the actual link chain, so <strong>more extra
-space may be needed</strong>, breaking the O(1) extra space promise)</p>
-<p>It can be proved (for example, by induction) that the visit chain above is enough for
+in the transformed tree, that's exactly when we meet the <code>Root</code> for the second time.</p>
+<p>(<em>Side Note</em>: the visit chain is in the reverse order of the actual link chain, so <strong>more
+extra space may be needed</strong>, breaking the O(1) extra space promise)</p>
+<p>It can be <em>proved (for example, by induction)</em> that the visit chain above is enough for
 the procedure to visit all but those in the right link chain of the root (including the
 root) in post-order fashion. Those excluded happen to be the last ones to visit. To deal
 with this, the paper proposed to add a fake root that left-links to the real root:</p>
@@ -415,6 +415,9 @@ with this, the paper proposed to add a fake root that left-links to the real roo
 </span><span>    }
 </span><span>}
 </span></code></pre>
+<p>(<em>Side Note</em>: The inductive proof can start with inductively proving that the right
+link of the rightmost node in the input tree will be read exactly once, so as to
+update the <code>cur_root</code> to the read value.)</p>
 
 
         

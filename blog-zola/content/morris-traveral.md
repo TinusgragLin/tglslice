@@ -257,10 +257,11 @@ For the transformed tree, the traversal order starting from `RM_LST` is:
 Clearly, we need visit the `RM_LST (RM_LST's Parent) ... (Root's Left Child)` chain
 right after `RM_LST`'s left sub-tree is done. Since `RM_LST` right-links the `Root`
 in the transformed tree, that's exactly when we meet the `Root` for the second time.
-(Note: the visit chain is in the reverse order of the actual link chain, so **more extra
-space may be needed**, breaking the O(1) extra space promise)
 
-It can be proved (for example, by induction) that the visit chain above is enough for
+(*Side Note*: the visit chain is in the reverse order of the actual link chain, so **more
+extra space may be needed**, breaking the O(1) extra space promise)
+
+It can be *proved (for example, by induction)* that the visit chain above is enough for
 the procedure to visit all but those in the right link chain of the root (including the
 root) in post-order fashion. Those excluded happen to be the last ones to visit. To deal
 with this, the paper proposed to add a fake root that left-links to the real root:
@@ -299,3 +300,7 @@ void post_order_traversal(Node *root) {
     }
 }
 ```
+
+(*Side Note*: The inductive proof can start with inductively proving that the right
+link of the rightmost node in the input tree will be read exactly once, so as to
+update the `cur_root` to the read value.)
