@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <title>Rust - Exploring Lifetime Problems - 2 - Tinusgraglin</title>
+    
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"><meta name="description" content="A Slice Rust - Exploring Lifetime Problems - 2 How should we understand this?"/><meta name="keywords" content="rust, rust-language, rust-lifetime" />
+    <meta property="og:title" content="A Slice of Tgl -&nbsp;Rust - Exploring Lifetime Problems - 2" />
+    <meta property="og:type" content="website"/><meta property="og:url" content="&#x2F;blog&#x2F;rust-explore-lifetime-problems-2&#x2F;"/><meta property="og:description" content="How should we understand this?"/>
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="/blog/assets/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="/blog/style.css?h=97e262212a0704163528">
+    <link rel="stylesheet" href=" /blog/color/orange.css?h=a5a5d7faf9d4bc3e0b18">
+    
+</head>
+    <body>
+        <div class="container center">
+<header class="header">
+    <div class="header__inner">
+        <div class="header__logo">
+            <a href="&#x2F;blog">
+    <div class="logo">
+        LIN
+    </div>
+</a>
+        </div>
+        <div class="menu-trigger">menu</div>
+    </div>
+    
+    <nav class="menu">
+        <ul class="menu__inner menu__inner--desktop">
+            
+            
+                    <li>
+                        <a href="
+    
+        /blog/about
+    
+">about</a>
+                    </li>
+                
+            </ul>
+
+        <ul class="menu__inner menu__inner--mobile">
+            
+        <li>
+            <a href="
+    
+        /blog/about
+    
+">about</a>
+        </li>
+        </ul>
+    </nav>
+
+    </header>
+<div class="content"><article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="&#x2F;blog&#x2F;rust-explore-lifetime-problems-2&#x2F;">Rust - Exploring Lifetime Problems - 2</a>
+            </h1>
+            
+    <div class="post-meta">
+        <span class="post-date">2023.02.28
+                [Updated: 2023.12.29]
+                </span>
+
+        <span class="post-author"></span>
+
+        
+
+    
+    :: {<a href="/blog/categories/rust/">rust</a>} 
+
+            
+    ::
+    #<a href="/blog/tags/rust-language/">rust-language</a>
+        
+    #<a href="/blog/tags/rust-lifetime/">rust-lifetime</a>
+        
+    
+            
+        
+    </div>
+
+            
+    
+</header><p>The following code snippet is a abbreviated demonstration of a problem I have encountered in my project:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">struct </span><span>Inner1;
+</span><span style="color:#b48ead;">struct </span><span>Inner2;
+</span><span>
+</span><span style="color:#b48ead;">struct </span><span>S {
+</span><span>    </span><span style="color:#bf616a;">inner1</span><span>: Inner1, 
+</span><span>    </span><span style="color:#bf616a;">inner2</span><span>: Inner2
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">impl </span><span>S {
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">as_inner2_ref</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; &amp;Inner2 {
+</span><span>        &amp;</span><span style="color:#bf616a;">self</span><span>.inner2
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">let_us_test</span><span>(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>) {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> i1 = &amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>.inner1;
+</span><span>
+</span><span>        </span><span style="color:#65737e;">// &amp;self.inner2;            // A
+</span><span>        </span><span style="color:#65737e;">// self.as_inner2_ref();    // B
+</span><span>
+</span><span>        i1;
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>In this code snippet, using line B makes the compiler complains that you mutable and immutable references to <code>self</code> can not coexist,
+while using line A satisfies the compiler. This seems weird at first, since line A and B does exactly the same thing! Or, is this what
+the compiler think?</p>
+<p>On closer investigation, we will be able to find that this is not the case: line A explicitly states that it wants only a mutable references
+to <code>self.inner</code> while line B calls a function that needs a mutable reference to the whole <code>self</code>, so in the first case the compiler knows 
+that <code>i1</code> is a mutable reference to only <code>self.inner1</code>, and during the lifetime of <code>i1</code>, a mutable reference to only <code>self.inner2</code> is created,
+which is fine, but in the second case, since the compiler will not try to understand what <code>as_inner2_ref</code> does, the compiler reasonably assumes
+<code>as_inner2_ref</code> refers/touches the whole <code>self</code>, after all, it is written in the signature: <code>&amp;self</code>, thus the compiler is unhappy because there
+might be both a mutable and immutable references to <code>self.inner1</code>.</p>
+<p>This example seems simple, what I have encountered, though has the same reasoning, is a little bit of hard to spot the heart of the problem:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">let_us_test_2</span><span>(</span><span style="color:#bf616a;">self</span><span>: std::pin::Pin&lt;&amp;</span><span style="color:#b48ead;">mut Self</span><span>&gt;) {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> i1 = &amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>.inner1;
+</span><span>
+</span><span>        &amp;</span><span style="color:#bf616a;">self</span><span>.inner2;
+</span><span>
+</span><span>        i1;
+</span><span>    }
+</span></code></pre>
+<p>Notice that this time we use line A but change the type of <code>self</code> from <code>&amp;mut Self</code> to <code>Pin&lt;&amp;mut self&gt;</code>, it will again not compile. The problem is
+that the reason that we can still use <code>self.inner1</code> is because <code>Pin&lt;Deref&lt;T&gt;&gt;</code>/<code>Pin&lt;DerefMut&lt;T&gt;&gt;</code> implments <code>Deref&lt;T&gt;</code>/<code>DerefMut&lt;T&gt;</code>, and 
+<code>deref</code>/<code>deref_mut</code> takes a immutable/mutable reference to <code>Self</code>, which means the above code is really:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">let_us_test_2</span><span>(</span><span style="color:#bf616a;">self</span><span>: std::pin::Pin&lt;&amp;</span><span style="color:#b48ead;">mut Self</span><span>&gt;) {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> i1 = &amp;</span><span style="color:#b48ead;">mut </span><span>Pin::deref_mut(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>).inner1;
+</span><span>
+</span><span>        &amp;Pin::deref(&amp;</span><span style="color:#bf616a;">self</span><span>).inner2;
+</span><span>
+</span><span>        i1;
+</span><span>    }
+</span></code></pre>
+<p>Bang! A mutable and an immutable reference to <code>Self</code> can not coexist! To solve this, we just need to try making it explicit that the two part really
+needs two different part of <code>self</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">let_us_test_2</span><span>(</span><span style="color:#bf616a;">self</span><span>: std::pin::Pin&lt;&amp;</span><span style="color:#b48ead;">mut Self</span><span>&gt;) {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> mut_ref = </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#96b5b4;">deref_mut</span><span>(); </span><span style="color:#65737e;">// &amp;mut Self
+</span><span>        </span><span style="color:#b48ead;">let</span><span> i1 = &amp;</span><span style="color:#b48ead;">mut</span><span> mut_ref.inner1;   </span><span style="color:#65737e;">// this touches only self.inner1
+</span><span>
+</span><span>        &amp;mut_ref.inner2;                </span><span style="color:#65737e;">// this touches only self.inner2
+</span><span>
+</span><span>        i1;
+</span><span>    }
+</span></code></pre>
+<hr />
+<p>This behavior is called <a href="https://doc.rust-lang.org/nomicon/borrow-splitting.html">splitting-borrow</a>.</p>
+
+
+        
+    
+
+        
+        
+    </article></div>
+    <div class="pagination">
+        <div class="pagination__buttons">
+            </div>
+    </div>
+<footer class="footer">
+                    <div class="footer__inner"><div class="copyright">
+            <span>© 2024 Tinusgraglin <span/>
+            <span>:: Powered by <a href="https://www.getzola.org/">Zola</a>(<a href="https://www.rust-lang.org/">Rust</a>) and <a href="https://bun.sh">Bun</a>(<a href="https://ziglang.org">Zig</a>)</span>
+        </div>
+    <script type="text/javascript" src="/blog/assets/js/main.js"></script>
+</div>
+                    
+
+                </footer></div>
+    </body>
+</html>

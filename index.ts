@@ -1,4 +1,4 @@
-const blog_serve_dir = 'blog-site'
+const blog_serve_dir = 'generated-blog-site'
 
 function serve_blog(path: String): Response {
     if (path.endsWith('/')) {
