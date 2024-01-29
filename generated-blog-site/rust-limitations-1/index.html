@@ -64,7 +64,7 @@
             
     <div class="post-meta">
         <span class="post-date">2023.12.29
-                [Updated: 2023.12.30]
+                [Updated: 2024.01.29]
                 </span>
 
         <span class="post-author"></span>
@@ -95,7 +95,7 @@
 		<ul>
 		
 			<li>
-				<a href="/blog/rust-limitations-1/#reborrow-and-then-type-inference">Reborrow, and then Type Inference</a>
+				<a href="/blog/rust-limitations-1/#reborrowings-are-not-after-all-possible-type-inferences">Reborrowings Are NOT After All Possible Type Inferences</a>
 				
 			</li>
 		
@@ -141,9 +141,12 @@
 		</div>
 </div>
 
-</header><h1 id="reborrow-and-then-type-inference">Reborrow, and then Type Inference<a class="zola-anchor" href="#reborrow-and-then-type-inference" aria-label="Anchor link for: reborrow-and-then-type-inference">§</a>
+</header><h1 id="reborrowings-are-not-after-all-possible-type-inferences">Reborrowings Are NOT After All Possible Type Inferences<a class="zola-anchor" href="#reborrowings-are-not-after-all-possible-type-inferences" aria-label="Anchor link for: reborrowings-are-not-after-all-possible-type-inferences">§</a>
 </h1>
-<p>So some references are moved, not reborrowed:</p>
+<p>'Reborrowing' of a reference, as a type of coercion, needs the information of
+the 'source' and 'destination' type. But it's not the case that a reborrowing
+only happens after all type inferences are done, so in some cases, when the type
+information isn't complete, reborrowing does not happen as one would expect:</p>
 <pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let mut</span><span> n: </span><span style="color:#b48ead;">i32 </span><span>= </span><span style="color:#d08770;">42</span><span>;
 </span><span style="color:#b48ead;">let</span><span> r1 = &amp;</span><span style="color:#b48ead;">mut</span><span> n;
 </span><span>
@@ -157,6 +160,13 @@
 </span><span style="color:#b48ead;">let</span><span> r2 = &amp;</span><span style="color:#b48ead;">mut </span><span>*r1;
 </span><span>
 </span><span>*r1 = </span><span style="color:#d08770;">43</span><span>;
+</span></code></pre>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">func</span><span>&lt;T&gt;(</span><span style="color:#bf616a;">a</span><span>: T, </span><span style="color:#bf616a;">b</span><span>: T) {}
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">test</span><span>&lt;T&gt;(</span><span style="color:#bf616a;">a</span><span>: &amp;</span><span style="color:#b48ead;">mut</span><span> T, </span><span style="color:#bf616a;">b</span><span>: &amp;</span><span style="color:#b48ead;">mut</span><span> T) {
+</span><span>    </span><span style="color:#96b5b4;">func</span><span>(a, b);
+</span><span>    </span><span style="color:#65737e;">// Error: `a` is moved. But we are free to use `b`:
+</span><span>    </span><span style="color:#96b5b4;">func</span><span>(a, b);
+</span><span>}
 </span></code></pre>
 <h1 id="lifetimes-of-closures">Lifetimes of Closures<a class="zola-anchor" href="#lifetimes-of-closures" aria-label="Anchor link for: lifetimes-of-closures">§</a>
 </h1>
@@ -267,9 +277,11 @@ collect them into your own type.</li>
 <h1 id="references">References<a class="zola-anchor" href="#references" aria-label="Anchor link for: references">§</a>
 </h1>
 <ul>
+<li><a href="https://doc.rust-lang.org/reference/type-coercions.html#coercion-types">Reference - Type Coercions</a></li>
 <li><a href="https://github.com/rust-lang/rust/issues/100002">Issue 100002</a></li>
 <li><a href="https://github.com/rust-lang/rust/issues/41078#issuecomment-293646723">Issue 41078</a></li>
 <li><a href="https://doc.rust-lang.org/stable/error_codes/E0521.html#error-code-e0521">Error E0521</a></li>
+<li><a href="https://users.rust-lang.org/t/why-does-the-type-annotation-incur-the-reborrow/88479/10">Why does the type annotation incur the reborrow?</a></li>
 <li><a href="https://users.rust-lang.org/t/why-closure-cannot-return-a-reference-to-data-moved-into-closure/72655">Why closure cannot return a reference to data moved into closure</a></li>
 </ul>
 

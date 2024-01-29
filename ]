@@ -12,7 +12,7 @@ categories = ["rust"]
 ToC=true
 +++
 
-# Reborrowings Are NOT After All Possible Type Inferences
+# Reborrowing isn't After All Possible Type Inferences
 
 'Reborrowing' of a reference, as a type of coercion, needs the information of
 the 'source' and 'destination' type. But it's not the case that a reborrowing
