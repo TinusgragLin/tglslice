@@ -13,6 +13,9 @@
         <loc>/blog/categories/algo/</loc>
     </url>
     <url>
+        <loc>/blog/categories/dive-into-that-lake/</loc>
+    </url>
+    <url>
         <loc>/blog/categories/network/</loc>
     </url>
     <url>
@@ -62,6 +65,9 @@
     </url>
     <url>
         <loc>/blog/page/3/</loc>
+    </url>
+    <url>
+        <loc>/blog/page/4/</loc>
     </url>
     <url>
         <loc>/blog/qknt-raft-0/</loc>
@@ -115,10 +121,16 @@
         <loc>/blog/tags/</loc>
     </url>
     <url>
+        <loc>/blog/tags/event-handling/</loc>
+    </url>
+    <url>
         <loc>/blog/tags/greedy-algo/</loc>
     </url>
     <url>
         <loc>/blog/tags/mq/</loc>
+    </url>
+    <url>
+        <loc>/blog/tags/multi-tasking/</loc>
     </url>
     <url>
         <loc>/blog/tags/pitfalls/</loc>
@@ -164,5 +176,9 @@
     </url>
     <url>
         <loc>/blog/tags/web-spec/</loc>
+    </url>
+    <url>
+        <loc>/blog/thoughts-on-doing-gamma-after-beta/</loc>
+        <lastmod>2024-02-03</lastmod>
     </url>
 </urlset>

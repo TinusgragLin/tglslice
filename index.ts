@@ -13,7 +13,7 @@ function serve_blog(path: String): Response {
 Bun.serve({
     hostname: '0.0.0.0',
     port: '23333',
-    fetch(request, server) {
+    fetch(request, _server) {
         const url = new URL(request.url)
         const path = url.pathname
         if (path === '/blog') {
