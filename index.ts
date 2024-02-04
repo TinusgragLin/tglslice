@@ -21,7 +21,7 @@ function visit_log_dump(): string {
 }
 
 Bun.serve({
-    hostname: '127.0.0.1',
+    hostname: '0.0.0.0',
     port: '23333',
     fetch(request, server) {
         const req_url = new URL(request.url)
