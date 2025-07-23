@@ -2,6 +2,7 @@
 title="On the Relation Requirement for Some Sorting Algorithms"
 description="My walk through of what some of the sorting algorithms requres."
 date=2025-07-21
+updated=2025-07-23
 
 [taxonomies]
 tags = ["sorting", "math"]
@@ -11,26 +12,26 @@ categories = ["dive-into-that-lake"]
 ToC=true
 +++
 
-## The Problem
+# The Problem
 
 Given a list of elements from a set `S` and a relation `<` defined on `S`, we
 want to find a permutation of the list so that for *any two* elements in the
 permuted list, we should have `not (element after < element before)`.
 
-## Bubble Sort
+# Bubble Sort
 
 Take bubble sort as an example, the algorithm conceptually split the current list
 into the sorted and unsorted part, and in each iteration, it tries to find the
 *smallest* element of the unsorted part and place such element at the end of the
 sorted list, thus reduce the size of the unsorted part.
 
-### Find the smallest
+## Find the smallest
 
 This process is usually done by a linear walk with swapping: we start with the
 first element of the unsorted part, `a`, and tries to find an element `b` after
 `a` such that `b < a`. Once we do find such `b`, we swap `a` with `b`, then we
 tries to find an element `c` *after the swapped `a`* such that `c < b` and
-swap `b` with `c`, and so on and so force:
+swap `b` with `c`, and so on and so forth:
 
 ```
 We find the first b such that b < a, ...
@@ -62,7 +63,7 @@ c ... a ... b ...
 We end.
 ```
 
-### Implicit Assumption
+## Implicit Assumption
 
 For this process to be able to find the "smallest" element of all the unsorted
 part (a element `s` such that there exist no other `x` that satisfies `x < s`),
@@ -85,7 +86,7 @@ so `(not C) and A => not B` on the second assumption, we get:
 
 - If `c < b` and `b < a`, then `c < a` (**Transitivity**).
 
-### Good to Go
+## Good to Go
 
 So, are these two rules enough? Let us check the first iteration:
 
@@ -110,17 +111,17 @@ x(k) ... ...
     each z: not (z < x(k))
 ```
 
-So if you recursive with the same reasoning, you get:
+So if we recursive with the same reasoning, we get:
 
 - For any element `x` in the sorted list, every element `y` after it
   satisfies `not (y < x)`, exactly what we want.
 
-### Strict Partial Order
+## Strict Partial Order
 
 If we dig into math literature, a relation with asymmetry, transitivity and
 (implied) irreflexivity is called a [**strict partial order**](https://en.wikipedia.org/wiki/Partially_ordered_set#Strict_partial_orders).
 
-## Quick Sort (with Hoare Partition)
+# Quick Sort (with Hoare Partition)
 
 Let's look at another common sort algorithm, quick sort, as originally proposed
 by Hoare.
@@ -129,7 +130,7 @@ It is conceptually very simple: we select an element `p` and permute the list
 so that everything `< p` is before `p` and everything `not (< p)` is after `p`
 (the partition). Then we recursive into the two unsorted part.
 
-### The Partition
+## The Partition
 
 Specifically, the partition starts with selecting an "pivot" element `p`, and
 having two arrows pointing towards the start and the end of the list:
@@ -145,7 +146,7 @@ element `< p`. Likewise, we move the right arrow as long as `p <` the pointed
 element. When both arrows stop, we swap the elements pointed by the two arrows.
 We continue doing this until the two arrows cross each other.
 
-#### Skipped
+## Skipped
 
 Now, if we look into those "skipped" elements on both sides:
 
@@ -166,7 +167,7 @@ It seems that we assume exactly the same thing as before, i.e. asymmetry, which
 gives us `not (p < x) and not (y < p)` and transitivity, which gives us
 `not (y < x)`.
 
-#### Swapped
+## Swapped
 
 Cool, let's add the two rules to our tool kit and look into the two swapped
 elements:
@@ -190,7 +191,7 @@ third one that we "jump" to with unclear assumptions.
 
 OK, our precondition seems rather unhelpful, let's break it down:
 
-(Let's denote `not (x < y) and not (y < x)` with `x !<> y`)
+(Let's denote `not (x < y) and not (y < x)` with `x !<> y`, or `y !<> x`)
 
 1. If it is actually `(p < x) and (y < p)`, then with asymmetry and transitivity
    we can already reach the `not (x < y)` above.
@@ -200,7 +201,7 @@ OK, our precondition seems rather unhelpful, let's break it down:
    ```
    A and B => C
    <=>
-   (not C) and A => B
+   (not C) and A => not B
    ```
 
    So we need to prove `(x < y) and (p < x) => (p < y) or (y < p)`, which follows from
@@ -212,11 +213,59 @@ OK, our precondition seems rather unhelpful, let's break it down:
 
 So, in summary, we seem to have some assumption under which
 `(p !<> x) and (p !<> y) => not (x < y)` is true.
+Without this, it's still possible that `x < y`, so we would have to check this
+before swapping.
 
 Now, if we expand `not (x < y)` to `(y < x) or (x !<> y)`, it becomes clear that
 `(p !<> x) and (p !<> y) => (x !<> y)` (i.e. transitivity of the incomparability
 relation) could be our assumption here.
 
+If we go down from this abstract level and simply have real numbers and their
+normal comparing rules, we will see that the case 4 above is actually when
+`p == x` and `p == y`, so naturally we would have `x == y` so swapping them would
+not violate the no `after < before` (now it's also `before <= after`) rule.
+
+Actually, the `!<>` relation we just defined, is symmetric, reflexive (as per
+the definition), and with transitivity, is unsurprisingly called a
+**equivalence relation**.
+
+## Strict Weak Ordering
+
 It turns out, in math literature, a strict partial order with transitivity of the
 incomparability relation is called a [**strict weak order**](https://en.wikipedia.org/wiki/Weak_ordering#Strict_weak_orderings), exactly what C++
-[`std::sort` requires your custom comparator function to define](https://eel.is/c++draft/alg.sorting#general-3).
+[`std::sort` requires our custom comparator function to define](https://eel.is/c++draft/alg.sorting#general-3).
+
+Transitivity of incomparability gives us the ability to group `a`, `b` and `c`
+if `a !<> b` and `b !<> c`, without checking the relationship of `a` and `c`,
+thus possibly reducing the required amount of computation.
+
+Let's say that through this incomparability relation, we have grouped all elements
+into three groups, where each group includes all elements that is `!<>` the first
+element, and thus for any element `x` and `y` inside a group, `x !<> y`, and for
+any element `x` inside a group and any element `y` outside of the group,
+`not (x !<> y)`, i.e. `x < y or y < x`:
+
+```
+{a, b}
+{c, d, e}
+{f, g}
+```
+
+Now since elements from different group must be related by `<`, let's say we have
+`a < c`, then it's not possible that `c < b` or `d < a`, as otherwise we would get
+`a < b` and `d < c`. By the same reasoning, any element in the `a` group would be
+`<` any element from the `c` group. So if we have `a < c < f`, we can order our
+groups like this:
+
+```
+{a, b} <- {c, d, e} <- {f, g}
+```
+
+With transitivity of `<`, we know that any element from an earlier group would be
+`<` any element from a later group, and since `<` is asymmetry, we also know that
+there is no loop in this chain.
+
+(More formally, the `<-` in our diagram is a **strict total order** on the set of
+all equivalence classes defined by the equivalence realtion `!<>`).
+
+So with strict weak ordering, we have this nice-looking chain of order.
