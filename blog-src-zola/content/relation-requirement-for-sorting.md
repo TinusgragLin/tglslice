@@ -269,3 +269,8 @@ there is no loop in this chain.
 all equivalence classes defined by the equivalence realtion `!<>`).
 
 So with strict weak ordering, we have this nice-looking chain of order.
+
+# Inspiration
+
+- [An URLO dicussion](https://users.rust-lang.org/t/too-severe-precondition-for-slice-sort-by/131953)
+- [Order I Say!](https://web.archive.org/web/20120422220137/http://cpp-next.com/archive/2010/02/order-i-say/)
